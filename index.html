@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LIVE FOOTBALL - Live Score Widget</title>
+    <title>LIVE FOOTBALL - Professional Live Score & Stream Dashboard</title>
     <style>
         * {
             margin: 0;
@@ -16,11 +16,12 @@
             color: #ffffff;
             min-height: 100vh;
         }
+        /* Header */
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 40px;
+            padding: 15px 40px;
             background: #111827;
             border-bottom: 1px solid #1f2937;
         }
@@ -34,58 +35,291 @@
         .logo span {
             color: #22c55e;
         }
+        nav {
+            display: flex;
+            gap: 20px;
+        }
         nav a {
             color: #9ca3af;
             text-decoration: none;
-            margin: 0 15px;
             font-weight: 600;
+            font-size: 15px;
+            padding-bottom: 5px;
+            transition: 0.3s;
         }
-        nav a.active {
+        nav a:hover, nav a.active {
             color: #22c55e;
             border-bottom: 2px solid #22c55e;
-            padding-bottom: 5px;
         }
-        .container {
-            max-width: 1100px;
+
+        /* Layout Grid */
+        .main-container {
+            max-width: 1300px;
             margin: 30px auto;
             padding: 0 20px;
+            display: grid;
+            grid-template-columns: 2.2fr 1fr;
+            gap: 30px;
         }
-        .widget-box {
-            background: #111827;
+
+        @media(max-width: 968px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Hero Live Match */
+        .hero-match {
+            position: relative;
+            background: linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.85)), url('https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=1600&auto=format&fit=crop') center/cover;
+            border-radius: 16px;
+            padding: 40px 20px;
+            text-align: center;
             border: 1px solid #1f2937;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .live-badge {
+            background-color: #ef4444;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 13px;
+            display: inline-block;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .timer {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #38bdf8;
+        }
+        .teams-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin: 25px 0;
+        }
+        .team {
+            text-align: center;
+            width: 180px;
+        }
+        .team img {
+            width: 75px;
+            height: 75px;
+            object-fit: contain;
+            margin-bottom: 8px;
+        }
+        .team h3 {
+            font-size: 20px;
+            letter-spacing: 0.5px;
+        }
+        .score-board {
+            font-size: 60px;
+            font-weight: 900;
+            letter-spacing: 8px;
+            color: #ffffff;
+        }
+        .goal-scorers {
+            font-size: 13px;
+            color: #d1d5db;
+            background: rgba(17, 24, 39, 0.8);
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid #374151;
+        }
+
+        /* Ad Banner Placeholder */
+        .ad-banner {
+            background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+            border: 1px dashed #374151;
             border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            text-align: center;
+            color: #9ca3af;
+            margin: 25px 0;
+            font-size: 14px;
         }
-        h3 {
-            margin-bottom: 20px;
-            font-size: 20px;
+
+        /* Section Titles */
+        .section-title {
+            font-size: 18px;
+            margin-bottom: 15px;
             color: #38bdf8;
             display: flex;
             align-items: center;
             gap: 10px;
         }
+
+        /* Match Cards */
+        .match-card {
+            background: #111827;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            border: 1px solid #1f2937;
+            transition: 0.2s;
+        }
+        .match-card:hover {
+            border-color: #374151;
+        }
+        .match-status {
+            background: #ef4444;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .match-teams {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .match-score {
+            background: #065f46;
+            color: #34d399;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        /* Sidebar - Upcoming Big Match */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .sidebar-card {
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 14px;
+            padding: 20px;
+            text-align: center;
+        }
+        .sidebar-card h4 {
+            color: #22c55e;
+            font-size: 14px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .match-time-box {
+            font-size: 13px;
+            color: #9ca3af;
+            margin-top: 15px;
+            background: #1f2937;
+            padding: 8px;
+            border-radius: 6px;
+        }
     </style>
 </head>
 <body>
 
+    <!-- Header & Navigation with FIFA included -->
     <header>
         <div class="logo">⚽ <span>LIVE</span> FOOTBALL</div>
         <nav>
             <a href="#" class="active">Live</a>
             <a href="#">Fixtures</a>
             <a href="#">Results</a>
+            <a href="#">FIFA</a>
         </nav>
     </header>
 
-    <div class="container">
-        <h3>🔴 REAL-TIME LIVE SCORES</h3>
-        
-        <div class="widget-box">
-            <script type="text/javascript" src="https://www.sofascore.com/bundles/sofascorejs/js/embed-live.min.js"></script>
-            <div id="sofascore-live-embed" data-widget-id="football-live"></div>
+    <div class="main-container">
+        <!-- Asosiy qism (Chap tomon) -->
+        <div class="content-left">
+            
+            <!-- Hero Match: Man. City vs Liverpool yoki El Clasico -->
+            <div class="hero-match">
+                <span class="live-badge">🔴 LIVE</span>
+                <div class="timer" id="match-timer">78:20</div>
+                
+                <div class="teams-container">
+                    <div class="team">
+                        <img src="https://assets.stickpng.com/images/5842f6efm6515b1e0ad75aab.png" alt="Manchester City" onerror="this.src='https://cdn.iconscout.com/icon/free/png-256/free-football-shield-icon-download-in-svg-png-gif-file-formats--sports-soccer-game-pack-logos-icons-485984.png'">
+                        <h3>MAN. CITY</h3>
+                    </div>
+                    <div class="score-board" id="main-score">2 - 1</div>
+                    <div class="team">
+                        <img src="https://assets.stickpng.com/images/5842e8feb6515b1e0ad75b0f.png" alt="Liverpool" onerror="this.src='https://cdn.iconscout.com/icon/free/png-256/free-football-shield-icon-download-in-svg-png-gif-file-formats--sports-soccer-game-pack-logos-icons-485984.png'">
+                        <h3>LIVERPOOL</h3>
+                    </div>
+                </div>
+
+                <div class="goal-scorers">
+                    ⚽ Haaland 19' &nbsp;&nbsp;|&nbsp;&nbsp; ⚽ Salah 41' &nbsp;&nbsp;|&nbsp;&nbsp; ⚽ De Bruyne 65'
+                </div>
+            </div>
+
+            <!-- Reklama uchun joy (Google AdSense joylanadigan qism) -->
+            <div class="ad-banner">
+                📢 ADVERTISE HERE (Google AdSense / Banner Space)
+            </div>
+
+            <!-- Pastdagi Tablar / Ligalar bo'yicha jonli va rejadagi o'yinlar -->
+            <div class="section-title">📅 LIVE & UPCOMING MATCHES (LEAGUES)</div>
+
+            <div class="match-card">
+                <span class="match-status">LIVE 82'</span>
+                <div class="match-teams">Real Madrid vs Real Sociedad</div>
+                <div class="match-score">3 - 0</div>
+            </div>
+
+            <div class="match-card">
+                <span class="match-status">LIVE 54'</span>
+                <div class="match-teams">Inter Milan vs AC Milan</div>
+                <div class="match-score">1 - 1</div>
+            </div>
+
+            <div class="match-card">
+                <span style="background:#374151; color:#d1d5db;" class="match-status">22:00</span>
+                <div class="match-teams">Bayern Munich vs Borussia Dortmund</div>
+                <div style="background:#1f2937; color:#9ca3af;" class="match-score">VS</div>
+            </div>
+
+        </div>
+
+        <!-- Yon panel (O'ng tomon - Kutilayotgan katta o'yin) -->
+        <div class="sidebar">
+            <div class="sidebar-card">
+                <h4>🔥 NEXT BIG MATCH</h4>
+                <div style="font-weight: bold; font-size: 16px; margin-bottom: 10px;">EL CLÁSICO</div>
+                <div style="color: #38bdf8; font-size: 14px; font-weight: bold;">Real Madrid vs Barcelona</div>
+                <div class="match-time-box">
+                    📅 Sun, 26 Oct 2026<br>🕒 21:00 (Santiago Bernabéu)
+                </div>
+            </div>
+
+            <div class="sidebar-card" style="border-style: dashed; border-color: #374151;">
+                <span style="color: #6b7280; font-size: 13px;">Google AdSense Sidebar Banner</span>
+            </div>
         </div>
     </div>
 
+    <script>
+        // Real vaqt rejimida minutlarni oshirib borish animatsiyasi
+        let minutes = 78;
+        let seconds = 20;
+        setInterval(() => {
+            seconds++;
+            if (seconds >= 60) {
+                seconds = 0;
+                minutes++;
+            }
+            document.getElementById('match-timer').innerText = minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+        }, 1000);
+    </script>
 </body>
 </html>
