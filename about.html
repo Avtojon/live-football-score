@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#030b14">
+<meta name="description" content="LIVE FOOTBALL — live football scores, match results, and upcoming fixtures in one place.">
+<title>About — LIVE FOOTBALL</title>
+<style>
+:root{--bg:#030a12;--panel:#091725;--line:#20364a;--muted:#9db0c2;--white:#f7faff;--green:#2df58a;--blue:#159cff}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse at 50% -20%,#102a43 0,transparent 50%),var(--bg);color:var(--white);font-family:"Arial Narrow","Roboto Condensed",Arial,sans-serif}a{color:inherit;text-decoration:none}
+.wrap{width:min(1420px,100%);margin:auto;padding:0 24px}header{position:sticky;top:0;z-index:20;background:rgba(3,10,18,.96);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.topbar{height:60px;display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{display:flex;align-items:center;gap:10px;font-size:clamp(23px,2.6vw,34px);font-weight:1000;letter-spacing:-1.2px;white-space:nowrap}.ball{display:inline-grid;place-items:center;width:38px;height:38px;border:2px solid #dce8f5;border-radius:50%;font-size:23px;background:#10283d}.brand em{font-style:normal;color:var(--green)}
+nav{display:flex;align-items:center;gap:26px}nav a{padding:25px 0 22px;font-size:14px;font-weight:900;color:#c6d2de;border-bottom:3px solid transparent}nav a.active,nav a:hover{color:var(--green);border-color:var(--green)}
+main{padding-top:22px;padding-bottom:36px}h1,h2,h3,p{margin-top:0}h1{font-size:clamp(38px,6vw,72px);line-height:.98;font-weight:1000;letter-spacing:-1.8px;text-transform:uppercase;margin-bottom:0}h2{font-size:clamp(25px,3.2vw,38px);line-height:1.08;font-weight:1000;letter-spacing:-.5px;text-transform:uppercase;margin-bottom:16px}
+.pulse{height:9px;width:9px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green);animation:pulse 1.6s infinite}@keyframes pulse{50%{opacity:.45}}
+.kicker{display:flex;align-items:center;gap:10px;color:var(--green);font-size:12px;font-weight:1000;letter-spacing:2px;text-transform:uppercase;margin-bottom:20px}
+.ad{position:relative;min-height:96px;margin:20px 0;border:1px dashed #34536d;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;text-align:center;padding:18px;background:linear-gradient(110deg,#0d2034,#07121f 55%,#102a41)}.ad:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(125deg,transparent 0 36px,rgba(65,158,230,.04) 37px 39px);pointer-events:none}.ad strong{position:relative;display:block;font-size:clamp(21px,3vw,32px);font-weight:1000}.ad p{position:relative;color:#b7c7d6;font-size:13px;margin:6px 0 0}.ad small{position:absolute;right:10px;top:8px;color:#71889d;font-size:9px;letter-spacing:1px}
+.about-hero{position:relative;overflow:hidden;border:1px solid #23435b;border-radius:16px;background:radial-gradient(ellipse at 78% 15%,#143b5e 0,transparent 38%),linear-gradient(120deg,#0c2237,#06111d 58%,#0b2031);padding:clamp(26px,5vw,64px);min-height:300px;display:flex;flex-direction:column;justify-content:center}.about-hero:after{content:"⚽";position:absolute;right:4%;bottom:-30%;font-size:clamp(160px,30vw,360px);opacity:.055;transform:rotate(-18deg);pointer-events:none}.hero-copy{position:relative;z-index:1;max-width:920px}.hero-copy h1 span{color:var(--green)}.hero-copy p{max-width:760px;margin:24px 0 0;color:#c5d4e1;font-size:clamp(17px,2vw,23px);line-height:1.65}
+.about-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;margin-top:18px}.about-card{border:1px solid #1d3449;border-radius:14px;background:linear-gradient(135deg,#0b1c2b,#07121e);padding:clamp(22px,3vw,34px);min-width:0}.about-card p{font-size:clamp(15px,1.5vw,18px);line-height:1.75;color:#b9c9d7;margin-bottom:0}.value-list{display:grid;gap:12px;margin-top:20px}.value-item{display:grid;grid-template-columns:42px 1fr;gap:13px;align-items:start;padding:15px;border:1px solid #1d3449;border-radius:10px;background:#081522}.value-icon{width:42px;height:42px;border:1px solid #1e6447;border-radius:10px;background:#0b281d;color:var(--green);display:grid;place-items:center;font-size:20px;font-weight:1000}.value-item b{display:block;font-size:16px;text-transform:uppercase;margin:1px 0 5px}.value-item p{font-size:14px;line-height:1.55;color:#9fb2c3;margin:0}
+.about-band{display:grid;grid-template-columns:1fr auto;align-items:center;gap:24px;margin-top:18px;padding:clamp(22px,3vw,34px);border:1px solid #1c5b40;border-radius:14px;background:linear-gradient(110deg,#0b261d,#071720 70%)}.about-band h2{margin:0}.about-band p{color:#b8cbbf;font-size:16px;line-height:1.65;max-width:800px;margin:12px 0 0}.go-live{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;background:var(--green);color:#03120b;font-size:14px;font-weight:1000;padding:14px 18px;border-radius:9px}
+footer{border-top:1px solid #1b3042;margin-top:28px;padding:23px 0;color:#8fa5b8}.footer-inner{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}footer strong{font-size:20px;color:#fff}footer a{margin-left:16px;font-size:12px}
+@media(max-width:760px){.wrap{padding-left:16px;padding-right:16px}.topbar{height:auto;min-height:65px;flex-wrap:wrap;padding-top:10px;padding-bottom:8px}.ball{width:32px;height:32px;font-size:19px}nav{order:3;width:100%;justify-content:space-between;gap:12px}nav a{padding:9px 0 7px;font-size:12px}.about-grid{grid-template-columns:1fr}.about-hero{min-height:270px}.about-band{grid-template-columns:1fr}.go-live{justify-self:start}.ad{margin:15px 0;min-height:82px}}
+@media(max-width:420px){.wrap{padding-left:11px;padding-right:11px}.brand{font-size:22px}.about-hero{padding:22px 18px}.kicker{font-size:10px;letter-spacing:1.2px}.hero-copy p{font-size:16px}.about-card{padding:20px 16px}.about-band{padding:20px 16px}}
+</style>
+</head>
+<body>
+<header><div class="wrap topbar">
+<a class="brand" href="index.html"><span class="ball">⚽</span> LIVE <em>FOOTBALL</em></a>
+<nav aria-label="Main navigation"><a href="index.html#live">LIVE SCORES</a><a href="index.html#fixtures">FIXTURES</a><a class="active" href="about.html" aria-current="page">ABOUT</a></nav>
+</div></header>
+<main class="wrap">
+<section class="about-hero"><div class="hero-copy">
+<div class="kicker"><i class="pulse"></i> FOOTBALL. LIVE. IN ONE PLACE.</div>
+<h1>FOOTBALL <span>EVERY MOMENT.</span><br>ALL IN ONE PLACE.</h1>
+<p>LIVE FOOTBALL is a convenient place to follow live match scores and results, and stay informed about important upcoming fixtures before kick-off.</p>
+</div></section>
+<section class="ad" aria-label="Advertisement space"><small>ADVERTISEMENT</small><div><strong>ADVERTISE HERE</strong><p>Put your brand in front of football fans</p></div></section>
+<section class="about-grid">
+<article class="about-card"><div class="kicker">01 / ABOUT US</div><h2>LIVE SCORES. KICK-OFF TIMES. BIG MATCHES.</h2>
+<p>Every minute matters in football. LIVE FOOTBALL makes it easier to follow ongoing matches and see when the next fixtures are scheduled to begin.</p>
+<p style="margin-top:14px">No unnecessary clutter — just the key information fans are looking for, presented clearly and brought together in one place.</p></article>
+<article class="about-card"><div class="kicker">02 / WHAT WE OFFER</div><h2>THE RIGHT INFORMATION. RIGHT ON TIME.</h2>
+<div class="value-list">
+<div class="value-item"><span class="value-icon">●</span><div><b>Live Scores</b><p>A clear, dedicated space to follow scores and match status as games unfold.</p></div></div>
+<div class="value-item"><span class="value-icon">◷</span><div><b>Match Day Fixtures</b><p>Check upcoming matches, scheduled dates, and kick-off times in advance.</p></div></div>
+<div class="value-item"><span class="value-icon">↗</span><div><b>Easy to Follow</b><p>Bold typography and organised sections designed for phones, tablets, and desktop screens.</p></div></div>
+</div></article></section>
+<section class="about-band"><div><div class="kicker">DON’T MISS MATCH DAY</div><h2>STAY CLOSE TO THE ACTION.</h2><p>Follow live results, check the upcoming fixture list, and plan your football day — all in one place with LIVE FOOTBALL.</p></div><a class="go-live" href="index.html#live">GO TO LIVE SCORES →</a></section>
+<footer><div class="footer-inner"><strong>⚽ LIVE FOOTBALL</strong><span>Big matches. Clear scores. One place.</span><span><a href="index.html#live">LIVE</a><a href="index.html#fixtures">FIXTURES</a><a href="about.html">ABOUT</a></span></div></footer>
+</main></body></html>
