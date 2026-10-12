@@ -80,6 +80,8 @@ h3{font-size:20px;font-weight:1000;text-transform:uppercase;margin-bottom:0}
 .eyebrow{display:inline-block;padding:6px 10px;border-radius:6px;background:#0d4d8a;font-size:11px;font-weight:1000;letter-spacing:.8px}
 .derby{font-size:25px;font-weight:1000;margin:12px 0 17px}
 .vs-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
+.next-feature .featured-league{margin:0 0 18px;padding:0 6px;line-height:1.5}
+.next-feature .vs-row{margin-top:4px}
 .vs-team{font-weight:1000;font-size:12px}
 .vs-logo{display:block;font-size:42px;margin-bottom:6px}
 .vs{font-size:23px;font-weight:1000;color:#dce7f2}
@@ -161,12 +163,12 @@ nav{order:3;margin-left:24px}
 #siteSearch{width:clamp(180px,22vw,290px);height:40px;padding:0 40px 0 12px;border:1px solid var(--line);border-radius:10px;background:#081725;color:#f4f8fc;outline:none}
 #siteSearch:focus{border-color:var(--green);box-shadow:0 0 0 2px #24d98222}
 #siteSearch[hidden],#searchClear[hidden]{display:none!important}
-.featured-league{margin:22px 0 -8px;text-align:center;color:#b8c9d8;font-size:13px;font-weight:1000;letter-spacing:.7px;text-transform:uppercase}
+.featured-league{margin:16px 0 8px;text-align:center;color:#b8c9d8;font-size:13px;font-weight:1000;letter-spacing:.7px;text-transform:uppercase}
 .featured-kickoff{font-size:clamp(14px,1.7vw,19px);font-weight:900;color:#f3f7fb;line-height:1.35;margin-top:2px}
 .featured-date{font-size:12px;color:#a9bdce;font-weight:700;line-height:1.4}
 .featured-venue{margin-top:14px;padding-top:12px;border-top:1px solid #25415a;text-align:center;color:#b8c9d8;font-size:13px}
 .featured-venue small{display:block;margin-top:5px;color:#8fa8bd;font-size:11px}
-.hero-placeholder{margin-top:14px;margin-bottom:10px}
+.hero-placeholder{margin-top:8px;margin-bottom:10px}
 .hero-placeholder .placeholder-score{gap:6px}
 .hero-placeholder .placeholder-score>span{font-size:clamp(52px,7vw,86px)}
 .hero-placeholder .placeholder-score b{font-size:clamp(17px,2vw,24px)!important;letter-spacing:0!important;line-height:1.2}
@@ -190,7 +192,7 @@ nav{order:3;margin-left:24px}
 .side-fixture-button .fixture-time{justify-self:center;font-size:13px;color:var(--green)}
 @media(max-width:1000px){.match-row{grid-template-columns:minmax(0,1fr) 68px minmax(0,1fr) 16px;gap:8px}}
 @media(max-width:760px){.search-wrap{order:2;margin-left:auto}.search-wrap #siteSearch{position:absolute;top:67px;right:14px;z-index:20;width:min(78vw,320px);box-shadow:0 10px 25px #0008}.search-wrap #searchClear{position:absolute;top:67px;right:14px;z-index:21;width:32px;height:32px;min-width:32px;border:0;background:transparent}.topbar{position:relative}.match-row{grid-template-columns:minmax(0,1fr) 58px minmax(0,1fr);gap:6px;padding:13px 8px}.match-row .teamcell.home{grid-column:1;grid-row:2}.match-row .row-score{grid-column:2;grid-row:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;white-space:normal}
-.match-row .row-status{display:block;font-size:10px;line-height:1.3;font-weight:800;white-space:normal}.match-row .teamcell.away{grid-column:3;grid-row:2}.match-row .arrow{display:none}.match-row .teamcell{font-size:12px;gap:4px}.match-row .mini-logo{width:22px;height:22px}.match-row .teamlabel{max-width:none;overflow-wrap:anywhere}.hero-slot{padding:16px 10px}.featured-league{margin-top:16px;font-size:12px}.hero-placeholder{grid-template-columns:minmax(0,1fr) minmax(82px,.8fr) minmax(0,1fr);gap:5px}.hero-placeholder .team-logo{width:52px;height:52px}.hero-placeholder .placeholder-team-name{font-size:clamp(12px,3vw,17px)}.hero-placeholder .placeholder-score>span{font-size:clamp(35px,9vw,56px)}.hero-placeholder .placeholder-score b{font-size:14px!important}.detail-line{font-size:12px}.side-fixture-button .fixture-teams{font-size:11px;gap:4px}.side-fixture-button .mini-logo{width:22px;height:22px}}
+.match-row .row-status{display:block;font-size:10px;line-height:1.3;font-weight:800;white-space:normal}.match-row .teamcell.away{grid-column:3;grid-row:2}.match-row .arrow{display:none}.match-row .teamcell{font-size:12px;gap:4px}.match-row .mini-logo{width:22px;height:22px}.match-row .teamlabel{max-width:none;overflow-wrap:anywhere}.hero-slot{padding:16px 10px}.featured-league{margin:12px 0 8px;font-size:12px}.next-feature .featured-league{margin:0 0 16px;font-size:12px;line-height:1.5}.hero-placeholder{grid-template-columns:minmax(0,1fr) minmax(82px,.8fr) minmax(0,1fr);gap:5px}.hero-placeholder .team-logo{width:52px;height:52px}.hero-placeholder .placeholder-team-name{font-size:clamp(12px,3vw,17px)}.hero-placeholder .placeholder-score>span{font-size:clamp(35px,9vw,56px)}.hero-placeholder .placeholder-score b{font-size:14px!important}.detail-line{font-size:12px}.side-fixture-button .fixture-teams{font-size:11px;gap:4px}.side-fixture-button .mini-logo{width:22px;height:22px}}
 @media(max-width:420px){.match-row{grid-template-columns:minmax(0,1fr) 48px minmax(0,1fr);gap:4px;padding:11px 5px}.match-row .row-score{font-size:15px;padding:8px 1px}.match-row .row-status{font-size:9px}.match-row .teamcell{font-size:10px}.match-row .mini-logo{width:18px;height:18px}.hero-placeholder{grid-template-columns:minmax(0,1fr) minmax(70px,.72fr) minmax(0,1fr)}.hero-placeholder .placeholder-team-name{font-size:11px}.hero-placeholder .placeholder-score>span{font-size:34px}.side-fixture-button .fixture-teams{font-size:10px}}
 
 </style>
@@ -243,19 +245,21 @@ nav{order:3;margin-left:24px}
       </div>
       <div class="filterbar" aria-label="Competition filters">
         <button class="filter" type="button" data-filter="live" aria-pressed="false">Live Now</button>
+        <button class="filter" type="button" data-filter="2" aria-pressed="false">Champions League</button>
+        <button class="filter" type="button" data-filter="3" aria-pressed="false">Europa League</button>
+        <button class="filter" type="button" data-filter="848" aria-pressed="false">Conference League</button>
+        <button class="filter" type="button" data-filter="afc-elite" aria-pressed="false">AFC Champions League Elite</button>
+        <button class="filter" type="button" data-filter="world-cup" aria-pressed="false">FIFA World Cup</button>
+        <button class="filter" type="button" data-filter="world-cup-qualifiers" aria-pressed="false">World Cup Qualifiers</button>
+        <button class="filter" type="button" data-filter="nations-league" aria-pressed="false">UEFA Nations League</button>
         <button class="filter" type="button" data-filter="39" aria-pressed="false">Premier League</button>
         <button class="filter" type="button" data-filter="140" aria-pressed="false">LaLiga</button>
-        <button class="filter" type="button" data-filter="2" aria-pressed="false">Champions League</button>
         <button class="filter" type="button" data-filter="135" aria-pressed="false">Serie A</button>
         <button class="filter" type="button" data-filter="78" aria-pressed="false">Bundesliga</button>
         <button class="filter" type="button" data-filter="61" aria-pressed="false">Ligue 1</button>
-        <button class="filter" type="button" data-filter="3" aria-pressed="false">Europa League</button>
-        <button class="filter" type="button" data-filter="848" aria-pressed="false">Conference League</button>
-        <button class="filter" type="button" data-filter="1" aria-pressed="false">FIFA World Cup</button>
-        <button class="filter" type="button" data-filter="8141" aria-pressed="false">FIFA Club World Cup</button>
-        <button class="filter" type="button" data-filter="saudi" aria-pressed="false">Saudi Pro League</button>
-        <button class="filter" type="button" data-filter="women" aria-pressed="false">Women’s Football</button>
+        <button class="filter" type="button" data-filter="club-world-cup" aria-pressed="false">FIFA Club World Cup</button>
         <button class="filter" type="button" data-filter="other" aria-pressed="false">Other Competitions</button>
+        <button class="filter" type="button" data-filter="women" aria-pressed="false">Women’s Football</button>
         <button class="filter active" type="button" data-filter="all" aria-pressed="true">All Matches</button>
       </div>
       <div class="match-list" id="matchList"><div class="empty-state">The match list will appear here when the secure API service is connected.</div></div>
@@ -318,7 +322,7 @@ nav{order:3;margin-left:24px}
   const featured = document.getElementById('featuredMatch');
   const countEl = document.getElementById('matchCount');
   const nextBig = document.getElementById('nextBigMatch');
-  const PAGE_SIZE = 15;
+  const PAGE_SIZE = 10;
   let matches = [], selectedMatchId = null, activeFilter = 'all', currentPage = 1, selectedMatchManual = false;
   const eventsByFixture = new Map(), eventsRequested = new Set();
   const LIVE = new Set(['1H','HT','2H','ET','BT','P','LIVE','INT']);
@@ -344,24 +348,63 @@ nav{order:3;margin-left:24px}
     return /\b(women|woman|women's|womens|female|feminine|féminine|femminile|frauen|damen|dames|ladies|girls|女子|女足)\b/i.test(text) || /\b(wsl|liga f|nwsl|damallsvenskan|toppserien|frauen-bundesliga|women's super league)\b/i.test(league);
   };
   const leagueId = m => Number(m?.league?.id || 0);
+  const leagueName = m => String(m?.league?.name || '').toLowerCase().trim();
   const isSaudi = m => /saudi pro league|pro league/i.test(String(m?.league?.name||'')) && /saudi/i.test(String(m?.league?.country||''));
+  const isWorldCupQualifiers = m => {
+    const name=leagueName(m);
+    return /world cup.*qualif|qualif.*world cup|world cup qualification|wc qualification|world cup qualifying/.test(name);
+  };
+  const isNationsLeague = m => /uefa nations league|nations league/.test(leagueName(m));
+  const isAfcChampionsElite = m => {
+    const name=leagueName(m);
+    return /afc champions league elite/.test(name) || (leagueId(m)===17 && /afc champions league/.test(name) && !/two|women/.test(name));
+  };
+  const isFifaClubWorldCup = m => /fifa club world cup|club world cup/.test(leagueName(m)) || leagueId(m)===8141;
+  const isFifaWorldCupFinals = m => {
+    const name=leagueName(m);
+    return (name==='fifa world cup' || name==='world cup' || name.includes('fifa world cup finals')) && !isWorldCupQualifiers(m);
+  };
   const hasBigTeam = m => { const pair = `${m?.teams?.home?.name||''} ${m?.teams?.away?.name||''}`.toLowerCase(); return BIG_TEAMS.some(t => pair.includes(t)); };
-  const isMajor = m => BIG_LEAGUES.has(leagueId(m)) || isSaudi(m) || /world cup|euro|copa america|afcon|asian cup|nations league|olympic/i.test(String(m?.league?.name||''));
+  // Competition priority is an explicit editorial hierarchy, not a guessed API rating.
+  // Official confederation competitions come first; leading domestic leagues follow.
+  const competitionTier = m => {
+    const id=leagueId(m), name=String(m?.league?.name||'').toLowerCase(), country=String(m?.league?.country||'').toLowerCase();
+    if (/women|female|feminine|frauen|damen|ladies|girls|女子|女足|u17|u18|u19|u20|u21|youth|academy|reserve|friendly|friendlies/.test(name)) return 7;
+    if (/fifa world cup|world cup|uefa european championship|european championship|\beuro\b|copa america|africa cup of nations|afcon|afc asian cup|olympic football|fifa intercontinental cup|fifa club world cup/.test(name)) return 0;
+    if (/uefa champions league|copa libertadores|afc champions league elite|caf champions league|concacaf champions cup|concacaf champions league/.test(name)) return 1;
+    if (/uefa europa league|copa sudamericana|uefa conference league|conference league|afc champions league two|afc cup|caf confederation cup|concacaf central american cup/.test(name)) return 2;
+    if (/nations league|world cup qualification|world cup qualifiers|european qualifiers|uefa qualifying|afc asian cup qualification|africa cup of nations qualification|international cup/.test(name)) return 2;
+    if (/gold cup|afc asian cup|africa cup of nations|copa america|european championship|euro 20|world cup/.test(name)) return 0;
+    if (/premier league/.test(name) && /england/.test(country)) return 3;
+    if (/laliga|la liga|serie a|bundesliga|ligue 1|eredivisie|primeira liga|premier league|championship/.test(name) && /england|spain|italy|germany|france|netherlands|portugal/.test(country)) return 3;
+    if (/fa cup|copa del rey|coppa italia|dfb pokal|coupe de france|efl cup|league cup|super cup/.test(name) && /england|spain|italy|germany|france/.test(country)) return 4;
+    if ([39,140,135,78,61,94,88].includes(id)) return 3;
+    if (/brasileirao|serie a|primera division|liga profesional|major league soccer|mls|saudi pro league|pro league|j1 league|k league 1|liga mx|a-league|super league/.test(name)) return 4;
+    if (/world cup|champions league|continental|cup|league|division|liga|ligue|serie|premier/.test(name)) return 5;
+    return 6;
+  };
   const prestige = m => {
-    const id=leagueId(m), name=String(m?.league?.name||'').toLowerCase(), round=String(m?.league?.round||'').toLowerCase();
-    let score=0;
-    if (/world cup|club world cup|european championship|euro 20|copa america|africa cup of nations|asian cup|olympic/i.test(name)) score+=145;
-    if (/uefa champions league|champions league/i.test(name)) score+=105;
-    else if (/uefa europa league|europa league/i.test(name)) score+=72;
-    else if (/conference league/i.test(name)) score+=55;
-    else if (/libertadores|concacaf champions|afc champions league|afc champions league elite/i.test(name)) score+=60;
-    if (/final|semi.?final|quarter.?final|play.?off|knockout/i.test(round)) score+=48;
-    const pos=TOP_LEAGUE_ORDER.indexOf(id); if(pos>=0) score+=Math.max(8,95-pos*3);
-    if(id===39||id===140||id===2) score+=12;
-    if(hasBigTeam(m)) score+=25;
-    if (/friendly|reserve|u17|u18|u19|u20|u21|youth|academy/i.test(name)) score-=35;
+    const tier=competitionTier(m), name=String(m?.league?.name||'').toLowerCase(), round=String(m?.league?.round||'').toLowerCase();
+    let score=[1000,900,800,700,580,420,250,0][tier] ?? 250;
+    if (tier===3) {
+      if (/premier league/.test(name) && /england/.test(String(m?.league?.country||'').toLowerCase())) score+=50;
+      else if (/serie a/.test(name) && /italy/.test(String(m?.league?.country||'').toLowerCase())) score+=46;
+      else if (/la liga|laliga/.test(name)) score+=44;
+      else if (/bundesliga/.test(name)) score+=42;
+      else if (/ligue 1/.test(name)) score+=40;
+      else if (/primeira liga/.test(name)) score+=28;
+      else if (/eredivisie/.test(name)) score+=26;
+    }
+    if (/final/.test(round)) score+=45;
+    else if (/semi.?final/.test(round)) score+=35;
+    else if (/quarter.?final/.test(round)) score+=25;
+    else if (/play.?off|knockout/.test(round)) score+=18;
+    if (/group|league phase/.test(round) && tier<=2) score+=5;
+    if (hasBigTeam(m)) score+=8;
+    if (/friendly|reserve|u17|u18|u19|u20|u21|youth|academy/.test(name)) score-=100;
     return score;
   };
+  const isMajor = m => competitionTier(m)<=3;
   const statusLabel = m => { const s=m?.fixture?.status||{}, c=s.short||'NS'; if(LIVE.has(c)) return c==='HT'?'HALF-TIME':`${c==='P'?'PENALTIES':'LIVE'}${s.elapsed!=null?` · ${s.elapsed}${s.extra?`+${s.extra}`:''}′`:''}`; if(DONE.has(c)) return c==='FT'?'FULL TIME':c==='AET'?'AFTER EXTRA TIME':c==='PEN'?'PENALTIES · FT':s.long||'FINISHED'; if(c==='PST')return 'POSTPONED'; if(c==='CANC')return 'CANCELLED'; if(c==='SUSP')return 'SUSPENDED'; return `${localTime(m?.fixture?.date)} · ${localDate(m?.fixture?.date)}`; };
   const scoreLabel = m => { const h=m?.goals?.home,a=m?.goals?.away; return h===null||h===undefined||a===null||a===undefined?'VS':`${h} - ${a}`; };
   const venueZone = m => {
@@ -381,7 +424,7 @@ nav{order:3;margin-left:24px}
   };
   const venueDateTime = m => { const zone=venueZone(m); if(!zone||!m?.fixture?.date)return 'Venue date/time unavailable'; try{const d=new Date(m.fixture.date);return `${d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:zone})} · ${d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:zone})} · ${zone.replaceAll('_',' ')}`;}catch{return 'Venue date/time unavailable';} };
   const matchGroup = m => isLive(m)?0:(!isDone(m)&&kickoff(m)>Date.now()?1:2);
-  const sortedMatches = list => [...list].sort((a,b)=>matchGroup(a)-matchGroup(b) || (matchGroup(a)===1 ? prestige(b)-prestige(a)||kickoff(a)-kickoff(b) : prestige(b)-prestige(a)||kickoff(a)-kickoff(b)));
+  const sortedMatches = list => [...list].sort((a,b)=>prestige(b)-prestige(a)||matchGroup(a)-matchGroup(b)||kickoff(a)-kickoff(b));
   function renderFeatured(m, manuallySelected=false) {
     if(!m){featured.innerHTML='<div class="empty-state">No suitable match is available right now. Choose a match from the list below.</div>';return;}
     const h=m.teams?.home||{},a=m.teams?.away||{},f=m.fixture||{},l=m.league||{},live=isLive(m),done=isDone(m),status=(isLive(m)||isDone(m))?statusLabel(m):'KICK-OFF PENDING',venue=[f.venue?.name,f.venue?.city].filter(Boolean).join(' · ');
@@ -402,7 +445,11 @@ nav{order:3;margin-left:24px}
     if(activeFilter==='live') list=list.filter(isLive);
     else if(activeFilter==='women') list=matches.filter(m=>isTodayLocal(m)&&isWomen(m));
     else if(activeFilter==='other') list=list.filter(m=>!isMajor(m));
-    else if(activeFilter==='saudi') list=list.filter(isSaudi);
+    else if(activeFilter==='world-cup') list=list.filter(isFifaWorldCupFinals);
+    else if(activeFilter==='club-world-cup') list=list.filter(isFifaClubWorldCup);
+    else if(activeFilter==='world-cup-qualifiers') list=list.filter(isWorldCupQualifiers);
+    else if(activeFilter==='nations-league') list=list.filter(isNationsLeague);
+    else if(activeFilter==='afc-elite') list=list.filter(isAfcChampionsElite);
     else if(activeFilter!=='all') list=list.filter(m=>String(m.league?.id)===activeFilter);
     const query=(document.getElementById('siteSearch')?.value||'').trim().toLocaleLowerCase();
     if(query) list=list.filter(m=>`${m.teams?.home?.name||''} ${m.teams?.away?.name||''} ${m.league?.name||''} ${m.league?.country||''}`.toLocaleLowerCase().includes(query));
@@ -439,7 +486,7 @@ nav{order:3;margin-left:24px}
     fixtureList.innerHTML=fixtureItems.length?fixtureItems.map(m=>renderRow(m,false)).join(''):`<div class="empty-state">No additional upcoming fixtures available.</div>`;
     const todayMatches=sortedMatches(matches.filter(m=>!isWomen(m)&&isTodayLocal(m)&&Number(m.fixture?.id)!==Number(selectedMatchId)));
     const excluded=new Set(fixtureItems.map(m=>Number(m.fixture?.id)));
-    const sidebar=todayMatches.filter(m=>!excluded.has(Number(m.fixture?.id))&&Number(m.fixture?.id)!==Number(next?.fixture?.id)).slice(0,8);
+    const sidebar=todayMatches.filter(m=>!excluded.has(Number(m.fixture?.id))&&Number(m.fixture?.id)!==Number(next?.fixture?.id)).slice(0,6);
     sideFixtures.innerHTML=sidebar.length?sidebar.map(makeSideFixture).join(''):`<div class="empty-state">No other important matches today.</div>`;
     if(next){const h=next.teams?.home||{},a=next.teams?.away||{},f=next.fixture||{},zoneTime=venueDateTime(next),hasVenueZone=!zoneTime.includes('unavailable'),venue=[f.venue?.name,f.venue?.city].filter(Boolean).join(' · ');nextBig.innerHTML=`<div class="featured-league">${esc(next.league?.name||'Football')}</div><div class="vs-row"><div class="vs-team"><span class="vs-logo">${h.logo?`<img class="mini-logo" style="width:42px;height:42px" src="${esc(h.logo)}" alt="">`:'⚽'}</span>${esc(h.name||'Home')}</div><div class="vs">VS</div><div class="vs-team"><span class="vs-logo">${a.logo?`<img class="mini-logo" style="width:42px;height:42px" src="${esc(a.logo)}" alt="">`:'⚽'}</span>${esc(a.name||'Away')}</div></div><div class="kickoff">${esc(localDate(f.date))} · ${esc(localTime(f.date))}<small>Your local time${venue?` · ${esc(venue)}`:''}${hasVenueZone?`<br>Stadium local time: ${esc(zoneTime)}`:''}</small></div>`; nextBig.onclick=()=>selectMatch(Number(f.id),true); nextBig.style.cursor='pointer';}
     else nextBig.innerHTML='<span class="eyebrow">FEATURED FIXTURE</span><div class="derby">NEXT BIG MATCH</div><div class="empty-state">No eligible future match found. Live and finished matches are never shown here.</div>';
@@ -455,10 +502,10 @@ nav{order:3;margin-left:24px}
   function autoSelect() {
     const available=matches.filter(m=>!isWomen(m));
     const live=sortedMatches(available.filter(isLive));
-    const liveMajor=live.filter(m=>prestige(m)>=65);
+    const liveMajor=live.filter(m=>competitionTier(m)<=3);
     const future=available.filter(m=>!isLive(m)&&!isDone(m)&&kickoff(m)>Date.now()).sort((a,b)=>prestige(b)-prestige(a)||kickoff(a)-kickoff(b));
     const finished=sortedMatches(available.filter(isDone));
-    const finishedMajor=available.filter(m=>isDone(m)&&prestige(m)>=65).sort((a,b)=>kickoff(b)-kickoff(a)||prestige(b)-prestige(a));
+    const finishedMajor=available.filter(m=>isDone(m)&&competitionTier(m)<=3).sort((a,b)=>prestige(b)-prestige(a)||kickoff(b)-kickoff(a));
     const best=liveMajor[0]||finishedMajor[0]||live[0]||future[0]||finished[0]||available[0];
     if(best){selectedMatchId=Number(best.fixture?.id);selectedMatchManual=false;renderFeatured(best,false);loadEventsFor(best);}
   }
