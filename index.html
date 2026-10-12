@@ -147,6 +147,11 @@ footer a{margin-left:16px;font-size:12px}
 .featured-kickoff{font-size:13px;color:#b7c9d8;margin-top:12px}
 @media(max-width:760px){.team-logo{width:52px;height:52px}.match-row{grid-template-columns:58px minmax(0,1fr) 58px minmax(0,1fr);gap:6px}.match-row .arrow{display:none}.detail-line{font-size:10px}}
 
+
+/* Readability and pagination additions; existing layout and color system preserved. */
+.pagination button{min-width:88px}
+.fixture-date,.detail-chip,.api-status{font-size:13px}
+@media(max-width:760px){.fixture-date,.detail-chip,.api-status{font-size:12px}}
 </style>
 </head>
 <body>
@@ -194,14 +199,19 @@ footer a{margin-left:16px;font-size:12px}
       <div class="filterbar" aria-label="Competition filters">
         <button class="filter active" type="button" data-filter="all" aria-pressed="true">All Matches</button>
         <button class="filter" type="button" data-filter="live" aria-pressed="false">Live Now</button>
-        <button class="filter" type="button" data-filter="1" aria-pressed="false">FIFA World Cup</button>
-        <button class="filter" type="button" data-filter="8141" aria-pressed="false">FIFA Club World Cup</button>
-        <button class="filter" type="button" data-filter="2" aria-pressed="false">Champions League</button>
         <button class="filter" type="button" data-filter="39" aria-pressed="false">Premier League</button>
         <button class="filter" type="button" data-filter="140" aria-pressed="false">LaLiga</button>
+        <button class="filter" type="button" data-filter="2" aria-pressed="false">Champions League</button>
         <button class="filter" type="button" data-filter="135" aria-pressed="false">Serie A</button>
         <button class="filter" type="button" data-filter="78" aria-pressed="false">Bundesliga</button>
         <button class="filter" type="button" data-filter="61" aria-pressed="false">Ligue 1</button>
+        <button class="filter" type="button" data-filter="3" aria-pressed="false">Europa League</button>
+        <button class="filter" type="button" data-filter="848" aria-pressed="false">Conference League</button>
+        <button class="filter" type="button" data-filter="1" aria-pressed="false">FIFA World Cup</button>
+        <button class="filter" type="button" data-filter="8141" aria-pressed="false">FIFA Club World Cup</button>
+        <button class="filter" type="button" data-filter="saudi" aria-pressed="false">Saudi Pro League</button>
+        <button class="filter" type="button" data-filter="women" aria-pressed="false">Women’s Football</button>
+        <button class="filter" type="button" data-filter="other" aria-pressed="false">Other Competitions</button>
       </div>
       <div class="match-list" id="matchList"><div class="empty-state">The match list will appear here when the secure API service is connected.</div></div>
 
@@ -242,11 +252,11 @@ footer a{margin-left:16px;font-size:12px}
   </div>
 
   <div class="bottom-grid">
-    <a class="promo" href="#fixtures"><span class="promo-icon">▤</span><span><b>Latest Football News</b><small>Transfers and official updates</small></span></a>
-    <a class="promo" href="#live"><span class="promo-icon">🏆</span><span><b>Latest Results</b><small>Check match scores</small></span></a>
-    <a class="promo" href="#live"><span class="promo-icon">▶</span><span><b>Video Highlights</b><small>Top match moments</small></span></a>
+    <a class="promo" href="https://www.bbc.com/sport/football" target="_blank" rel="noopener noreferrer"><span class="promo-icon">▤</span><span><b>Latest Football News</b><small>Football news and official updates</small></span></a>
+    <a class="promo" href="#fixtures"><span class="promo-icon">🏆</span><span><b>League Tables</b><small>Follow league standings</small></span></a>
+    <a class="promo" id="videoHighlightsLink" href="#live"><span class="promo-icon">▶</span><span><b>Video Highlights</b><small>Top match moments</small></span></a>
   </div>
-  <footer id="footer"><div class="footer-inner"><strong>⚽ LIVE FOOTBALL</strong><span>Big matches. Clear scores. One place.</span><span><a href="index.html#live">LIVE</a><a href="index.html#fixtures">FIXTURES</a><a href="about.html">ABOUT</a></span></div></footer>
+  <footer id="footer"><div class="footer-inner"><strong>⚽ LIVE FOOTBALL</strong><span>Big matches. Clear scores. One place.</span><span><a href="index.html#live">LIVE</a><a href="index.html#fixtures">FIXTURES</a><a href="about.html">ABOUT</a><a href="#privacy-settings" id="privacySettingsLink">PRIVACY &amp; COOKIE SETTINGS</a></span></div></footer>
 </main>
 
 
@@ -254,7 +264,7 @@ footer a{margin-left:16px;font-size:12px}
 <script>
 (() => {
   'use strict';
-  const API_BASE = 'https://live-football-api.i-boburon.workers.dev';
+  const API_BASE = String(window.LIVE_FOOTBALL_API_BASE || 'https://live-football-api.i-boburon.workers.dev').replace(/\/$/, '');
   const statusEl = document.getElementById('apiStatus');
   const matchList = document.getElementById('matchList');
   const fixtureList = document.getElementById('fixtureList');
@@ -263,180 +273,189 @@ footer a{margin-left:16px;font-size:12px}
   const featured = document.getElementById('featuredMatch');
   const countEl = document.getElementById('matchCount');
   const nextBig = document.getElementById('nextBigMatch');
-  let matches = [];
-  let selectedMatchId = null;
-  let activeFilter = 'all';
+  const PAGE_SIZE = 15;
+  const STORAGE_MATCH = 'liveFootball.selectedMatch.v2';
+  let matches = [], selectedMatchId = null, activeFilter = 'all', currentPage = 1, selectedMatchManual = false;
+  const eventsByFixture = new Map(), eventsRequested = new Set();
   const LIVE = new Set(['1H','HT','2H','ET','BT','P','LIVE','INT']);
   const DONE = new Set(['FT','AET','PEN','AWD','WO']);
-  const BIG_TEAMS = ['manchester city','manchester united','liverpool','arsenal','chelsea','tottenham','real madrid','barcelona','atletico madrid','bayern munich','borussia dortmund','inter','inter milan','ac milan','juventus','paris saint-germain','psg','napoli','ajax','benfica','porto'];
-  const BIG_LEAGUES = new Set([1,2,39,140,135,78,61,3,848]);
-  const VENUE_ZONES = {
-    'england':'Europe/London','scotland':'Europe/London','wales':'Europe/London','northern ireland':'Europe/London',
-    'spain':'Europe/Madrid','italy':'Europe/Rome','germany':'Europe/Berlin','france':'Europe/Paris','portugal':'Europe/Lisbon',
-    'netherlands':'Europe/Amsterdam','belgium':'Europe/Brussels','turkey':'Europe/Istanbul','saudi-arabia':'Asia/Riyadh','saudi arabia':'Asia/Riyadh',
-    'japan':'Asia/Tokyo','south-korea':'Asia/Seoul','south korea':'Asia/Seoul','china':'Asia/Shanghai','australia':'Australia/Sydney',
-    'brazil':'America/Sao_Paulo','argentina':'America/Argentina/Buenos_Aires','mexico':'America/Mexico_City','usa':'America/New_York','united states':'America/New_York',
-    'canada':'America/Toronto','poland':'Europe/Warsaw','ukraine':'Europe/Kyiv','greece':'Europe/Athens','switzerland':'Europe/Zurich','austria':'Europe/Vienna',
-    'denmark':'Europe/Copenhagen','sweden':'Europe/Stockholm','norway':'Europe/Oslo','croatia':'Europe/Zagreb','czech republic':'Europe/Prague',
-    'czechia':'Europe/Prague','russia':'Europe/Moscow','qatar':'Asia/Qatar','united arab emirates':'Asia/Dubai','india':'Asia/Kolkata'
-  };
+  const BIG_TEAMS = ['manchester city','manchester united','liverpool','arsenal','chelsea','tottenham','real madrid','barcelona','atletico madrid','bayern munich','borussia dortmund','inter','inter milan','ac milan','juventus','paris saint-germain','psg','napoli','ajax','benfica','porto','flamengo','boca juniors','river plate'];
+  const BIG_LEAGUES = new Set([1,2,3,848,39,140,135,78,61,45,48,143,94,88,253,307,98,262,71,72,128,239,556,11,12,15,16,17,18,531,525,526,960,9,10,848,103,307]);
+  const TOP_LEAGUE_ORDER = [39,140,2,135,78,61,3,848,307,253,94,88,45,48,143,1,15,16,17,18,11,12,9,10,103,71,72,128,239,556,531,525,526,960,8141];
+  const VENUE_ZONES = {'england':'Europe/London','scotland':'Europe/London','wales':'Europe/London','northern ireland':'Europe/London','spain':'Europe/Madrid','italy':'Europe/Rome','germany':'Europe/Berlin','france':'Europe/Paris','portugal':'Europe/Lisbon','netherlands':'Europe/Amsterdam','belgium':'Europe/Brussels','turkey':'Europe/Istanbul','saudi-arabia':'Asia/Riyadh','saudi arabia':'Asia/Riyadh','japan':'Asia/Tokyo','south-korea':'Asia/Seoul','south korea':'Asia/Seoul','china':'Asia/Shanghai','australia':'Australia/Sydney','brazil':'America/Sao_Paulo','argentina':'America/Argentina/Buenos_Aires','mexico':'America/Mexico_City','usa':'America/New_York','united states':'America/New_York','canada':'America/Toronto','poland':'Europe/Warsaw','ukraine':'Europe/Kyiv','greece':'Europe/Athens','switzerland':'Europe/Zurich','austria':'Europe/Vienna','denmark':'Europe/Copenhagen','sweden':'Europe/Stockholm','norway':'Europe/Oslo','croatia':'Europe/Zagreb','czech republic':'Europe/Prague','czechia':'Europe/Prague','russia':'Europe/Moscow','qatar':'Asia/Qatar','united arab emirates':'Asia/Dubai','india':'Asia/Kolkata'};
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const teamLogo = (team, cls='mini-logo') => team?.logo ? `<img class="${cls}" src="${esc(team.logo)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">` : '<span class="mini-crest">⚽</span>';
   const isLive = m => LIVE.has(m?.fixture?.status?.short);
-  const isDone = m => DONE.has(m?.fixture?.status?.short);
+  const isDone = m => DONE.has(m?.fixture?.status?.short) || ['PST','CANC','ABD','SUSP'].includes(m?.fixture?.status?.short);
   const kickoff = m => new Date(m?.fixture?.date || 0).getTime();
-  const localDate = value => value ? new Date(value).toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'}) : 'Date TBC';
-  const localTime = value => value ? new Date(value).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}) : 'TBC';
-  const venueZone = m => {
-    const country = String(m?.league?.country || '').toLowerCase().trim();
-    const city = String(m?.fixture?.venue?.city || '').toLowerCase();
-    if (city.includes('vancouver')) return 'America/Vancouver';
-    if (city.includes('toronto')) return 'America/Toronto';
-    if (city.includes('los angeles')) return 'America/Los_Angeles';
-    if (city.includes('seattle')) return 'America/Los_Angeles';
-    if (city.includes('dallas') || city.includes('houston')) return 'America/Chicago';
-    if (city.includes('new york') || city.includes('new jersey') || city.includes('miami') || city.includes('atlanta')) return 'America/New_York';
-    if (city.includes('mexico city') || city.includes('guadalajara') || city.includes('monterrey')) return 'America/Mexico_City';
-    if (city.includes('sydney')) return 'Australia/Sydney';
-    if (city.includes('perth')) return 'Australia/Perth';
-    return VENUE_ZONES[country] || VENUE_ZONES[country.replaceAll(' ','-')] || null;
+  const localDate = value => value ? new Date(value).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : 'Date TBC';
+  const localTime = value => value ? new Date(value).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : 'TBC';
+  const localDayKey = value => { const d = new Date(value); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+  const todayKey = () => localDayKey(Date.now());
+  const isTodayLocal = m => m?.fixture?.date && localDayKey(m.fixture.date) === todayKey();
+  const isWomen = m => {
+    const league = String(m?.league?.name || '').toLowerCase();
+    const country = String(m?.league?.country || '').toLowerCase();
+    const text = `${league} ${country}`;
+    return /\b(women|woman|women's|womens|female|feminine|féminine|femminile|frauen|damen|dames|ladies|girls|女子|女足)\b/i.test(text) || /\b(wsl|liga f|nwsl|damallsvenskan|toppserien|frauen-bundesliga|women's super league)\b/i.test(league);
   };
-  const venueTime = m => {
-    const zone = venueZone(m);
-    if (!zone || !m?.fixture?.date) return 'Venue timezone unavailable';
-    try { return `${localTimeInZone(m.fixture.date, zone)} · ${zone.replaceAll('_',' ')}`; } catch { return 'Venue timezone unavailable'; }
+  const leagueId = m => Number(m?.league?.id || 0);
+  const isSaudi = m => /saudi pro league|pro league/i.test(String(m?.league?.name||'')) && /saudi/i.test(String(m?.league?.country||''));
+  const hasBigTeam = m => { const pair = `${m?.teams?.home?.name||''} ${m?.teams?.away?.name||''}`.toLowerCase(); return BIG_TEAMS.some(t => pair.includes(t)); };
+  const isMajor = m => BIG_LEAGUES.has(leagueId(m)) || isSaudi(m) || /world cup|euro|copa america|afcon|asian cup|nations league|olympic/i.test(String(m?.league?.name||''));
+  const prestige = m => {
+    const id=leagueId(m), name=String(m?.league?.name||'').toLowerCase(), round=String(m?.league?.round||'').toLowerCase();
+    let score=0;
+    if (/world cup|club world cup|european championship|euro 20|copa america|africa cup of nations|asian cup|olympic/i.test(name)) score+=125;
+    if (/final|semi.?final|quarter.?final|play.?off|knockout/i.test(round)) score+=38;
+    const pos=TOP_LEAGUE_ORDER.indexOf(id); if(pos>=0) score+=Math.max(12,85-pos*2);
+    if(id===39||id===140||id===2) score+=15;
+    if(hasBigTeam(m)) score+=24;
+    if (/friendly|reserve|u17|u18|u19|u20|u21|youth|academy/i.test(name)) score-=28;
+    return score;
   };
-  const localTimeInZone = (value, zone) => new Date(value).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:zone});
-  const statusLabel = m => {
-    const s=m?.fixture?.status||{}, code=s.short||'NS';
-    if (LIVE.has(code)) return code==='HT'?'HALF-TIME':`${code==='P'?'PENALTIES':'LIVE'}${s.elapsed!=null?` · ${s.elapsed}${s.extra?`+${s.extra}`:''}′`:''}`;
-    if (DONE.has(code)) return code==='FT'?'FULL TIME':code==='AET'?'AFTER EXTRA TIME':code==='PEN'?'PENALTIES · FT':s.long||'FINISHED';
-    if (code==='PST') return 'POSTPONED'; if (code==='CANC') return 'CANCELLED'; if (code==='SUSP') return 'SUSPENDED';
-    return `${localTime(m?.fixture?.date)} · ${localDate(m?.fixture?.date)}`;
-  };
-  const scoreLabel = m => {
-    const h=m?.goals?.home, a=m?.goals?.away;
-    return h===null||h===undefined||a===null||a===undefined?'VS':`${h} - ${a}`;
-  };
-  const scorePriority = m => {
-    const home=String(m?.teams?.home?.name||'').toLowerCase(), away=String(m?.teams?.away?.name||'').toLowerCase();
-    const famous=BIG_TEAMS.some(t=>home.includes(t)||away.includes(t));
-    const leagueId=Number(m?.league?.id);
-    const importance=(BIG_LEAGUES.has(leagueId)?25:0)+(famous?35:0)+(Number(m?.league?.id)===1||Number(m?.league?.id)===2?20:0);
-    if (isLive(m)) return 1000+importance+(Number(m?.fixture?.status?.elapsed)||0)/10;
-    if (!isDone(m) && kickoff(m)>Date.now()) return 300+importance-Math.min(100,Math.max(0,(kickoff(m)-Date.now())/3600000));
-    return 100+importance;
-  };
-  const sortedMatches = list => [...list].sort((a,b)=>{
-    const group=m=>isLive(m)?0:(!isDone(m)&&kickoff(m)>Date.now()?1:2);
-    return group(a)-group(b) || (group(a)===1 ? kickoff(a)-kickoff(b) : scorePriority(b)-scorePriority(a));
-  });
+  const statusLabel = m => { const s=m?.fixture?.status||{}, c=s.short||'NS'; if(LIVE.has(c)) return c==='HT'?'HALF-TIME':`${c==='P'?'PENALTIES':'LIVE'}${s.elapsed!=null?` · ${s.elapsed}${s.extra?`+${s.extra}`:''}′`:''}`; if(DONE.has(c)) return c==='FT'?'FULL TIME':c==='AET'?'AFTER EXTRA TIME':c==='PEN'?'PENALTIES · FT':s.long||'FINISHED'; if(c==='PST')return 'POSTPONED'; if(c==='CANC')return 'CANCELLED'; if(c==='SUSP')return 'SUSPENDED'; return `${localTime(m?.fixture?.date)} · ${localDate(m?.fixture?.date)}`; };
+  const scoreLabel = m => { const h=m?.goals?.home,a=m?.goals?.away; return h===null||h===undefined||a===null||a===undefined?'VS':`${h} - ${a}`; };
+  const venueZone = m => { const country=String(m?.league?.country||'').toLowerCase().trim(), city=String(m?.fixture?.venue?.city||'').toLowerCase(); if(city.includes('vancouver'))return 'America/Vancouver'; if(city.includes('toronto'))return 'America/Toronto'; if(city.includes('los angeles')||city.includes('seattle'))return 'America/Los_Angeles'; if(city.includes('dallas')||city.includes('houston'))return 'America/Chicago'; if(city.includes('new york')||city.includes('new jersey')||city.includes('miami')||city.includes('atlanta'))return 'America/New_York'; if(city.includes('mexico city')||city.includes('guadalajara')||city.includes('monterrey'))return 'America/Mexico_City'; if(city.includes('sydney'))return 'Australia/Sydney'; if(city.includes('perth'))return 'Australia/Perth'; return VENUE_ZONES[country]||VENUE_ZONES[country.replaceAll(' ','-')]||null; };
+  const venueDateTime = m => { const zone=venueZone(m); if(!zone||!m?.fixture?.date)return 'Venue date/time unavailable'; try{const d=new Date(m.fixture.date);return `${d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:zone})} · ${d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:zone})} · ${zone.replaceAll('_',' ')}`;}catch{return 'Venue date/time unavailable';} };
+  const matchGroup = m => isLive(m)?0:(!isDone(m)&&kickoff(m)>Date.now()?1:2);
+  const sortedMatches = list => [...list].sort((a,b)=>matchGroup(a)-matchGroup(b) || (matchGroup(a)===1 ? prestige(b)-prestige(a)||kickoff(a)-kickoff(b) : prestige(b)-prestige(a)||kickoff(a)-kickoff(b)));
   function renderFeatured(m, manuallySelected=false) {
-    if (!m) {
-      featured.innerHTML='<div class="empty-state">No suitable match is available right now. Choose a match from the list below.</div>';
-      return;
-    }
-    const h=m.teams?.home||{}, a=m.teams?.away||{}, f=m.fixture||{}, league=m.league||{};
-    const live=isLive(m), finished=isDone(m), status=statusLabel(m);
-    const venue=[f.venue?.name,f.venue?.city].filter(Boolean).join(' · ') || 'Venue details unavailable';
+    if(!m){featured.innerHTML='<div class="empty-state">No suitable match is available right now. Choose a match from the list below.</div>';return;}
+    const h=m.teams?.home||{},a=m.teams?.away||{},f=m.fixture||{},l=m.league||{},live=isLive(m),done=isDone(m),status=statusLabel(m),venue=[f.venue?.name,f.venue?.city].filter(Boolean).join(' · ')||'Venue details unavailable';
     const localKickoff=`${localDate(f.date)} · ${localTime(f.date)} (your local time)`;
-    const score=scoreLabel(m);
-    featured.innerHTML=`<div class="hero-placeholder">
-      <div class="placeholder-team">${h.logo?`<img class="team-logo" src="${esc(h.logo)}" alt="${esc(h.name||'Home team')} logo">`:'<div class="placeholder-crest">⚽</div>'}<div class="placeholder-team-name">${esc(h.name||'Home team')}</div></div>
-      <div class="placeholder-score"><span>${esc(score)}</span><small>${esc(league.name||'FOOTBALL')}</small><b style="font-size:clamp(19px,2.5vw,28px);letter-spacing:0;color:${live?'var(--green)':finished?'#b9c9d7':'#f4f8fc'}">${esc(status)}</b><small>${manuallySelected?'SELECTED MATCH':'FEATURED MATCH'}</small></div>
-      <div class="placeholder-team">${a.logo?`<img class="team-logo" src="${esc(a.logo)}" alt="${esc(a.name||'Away team')} logo">`:'<div class="placeholder-crest">⚽</div>'}<div class="placeholder-team-name">${esc(a.name||'Away team')}</div></div>
-    </div><div class="detail-line"><span class="detail-chip">${esc(league.name||'Football')}${league.round?` · ${esc(league.round)}`:''}</span><span class="detail-chip">${esc(localKickoff)}</span></div><div class="detail-line"><span class="detail-chip">${esc(venue)}</span><span class="detail-chip">Stadium time: ${esc(venueTime(m))}</span></div><div class="placeholder-events">${live?'MATCH IN PROGRESS':finished?'MATCH FINISHED':'UPCOMING FIXTURE'} · FIXTURE #${esc(f.id||'—')}</div>`;
+    const goalEvents=eventsByFixture.get(Number(f.id))||[];
+    const scorerMarkup=(teamId)=>{const goals=goalEvents.filter(e=>String(e?.type||'').toLowerCase()==='goal'&&String(e?.team?.id)===String(teamId));if(goals.length)return `<div class="scorers">${goals.map(e=>`<span>${esc(e.player?.name||'Goal')} ${e.time?.elapsed!=null?`· ${esc(e.time.elapsed)}${e.time?.extra?`+${esc(e.time.extra)}`:''}′`:''}</span>`).join('')}</div>`;if(live||done){const teamGoals=String(teamId)===String(h.id)?m.goals?.home:m.goals?.away;if(Number(teamGoals)===0)return '<div class="scorers">No goals</div>';return `<div class="scorers">${eventsRequested.has(Number(f.id))?'Goal events unavailable':'Loading goal events…'}</div>`;}return '<div class="scorers">Kick-off pending</div>';};
+    featured.innerHTML=`<div class="hero-placeholder"><div class="placeholder-team">${h.logo?`<img class="team-logo" src="${esc(h.logo)}" alt="${esc(h.name||'Home team')} logo">`:'<div class="placeholder-crest">⚽</div>'}<div class="placeholder-team-name">${esc(h.name||'Home team')}</div>${scorerMarkup(h.id)}</div><div class="placeholder-score"><span>${esc(scoreLabel(m))}</span><small>${esc(l.name||'FOOTBALL')}</small><b style="font-size:clamp(19px,2.5vw,28px);letter-spacing:0;color:${live?'var(--green)':done?'#b9c9d7':'#f4f8fc'}">${esc(status)}</b><small>${manuallySelected?'SELECTED MATCH':'FEATURED MATCH'}</small></div><div class="placeholder-team">${a.logo?`<img class="team-logo" src="${esc(a.logo)}" alt="${esc(a.name||'Away team')} logo">`:'<div class="placeholder-crest">⚽</div>'}<div class="placeholder-team-name">${esc(a.name||'Away team')}</div>${scorerMarkup(a.id)}</div></div><div class="detail-line"><span class="detail-chip">${esc(l.name||'Football')}${l.round?` · ${esc(l.round)}`:''}</span><span class="detail-chip">${esc(localKickoff)}</span></div><div class="detail-line"><span class="detail-chip">${esc(venue)}</span><span class="detail-chip">Stadium local date/time: ${esc(venueDateTime(m))}</span></div><div class="placeholder-events">${live?'MATCH IN PROGRESS':done?'MATCH FINISHED':'UPCOMING FIXTURE'} · FIXTURE #${esc(f.id||'—')}</div>`;
   }
   function renderRow(m, selected=false) {
-    const f=m.fixture||{}, league=m.league||{}, h=m.teams?.home||{}, a=m.teams?.away||{};
-    const live=isLive(m), done=isDone(m), id=Number(f.id);
-    const dateTime=live ? statusLabel(m) : done ? 'FULL TIME' : `${localTime(f.date)} · ${localDate(f.date)}`;
-    return `<button type="button" class="match-row${selected?' selected':''}" data-match-id="${id}" aria-pressed="${selected?'true':'false'}" title="Show ${esc(h.name)} vs ${esc(a.name)} in the main scoreboard">
-      <div class="league"><b>${esc(league.name||'Football')}</b><span class="live-tag" style="color:${live?'var(--green)':done?'#9fb4c6':'#b8c8d6'}">${esc(dateTime)}</span></div>
-      <div class="teamcell home">${teamLogo(h)}<span class="teamlabel">${esc(h.name||'Home')}</span></div>
-      <div class="row-score${live?' live':''}">${esc(scoreLabel(m))}</div>
-      <div class="teamcell away"><span class="teamlabel">${esc(a.name||'Away')}</span>${teamLogo(a)}</div>
-      <div class="arrow">›</div>
-    </button>`;
+    const f=m.fixture||{},l=m.league||{},h=m.teams?.home||{},a=m.teams?.away||{},live=isLive(m),done=isDone(m),id=Number(f.id);
+    const dateTime=live?statusLabel(m):done?statusLabel(m):`${localTime(f.date)} · ${localDate(f.date)}`;
+    return `<button type="button" class="match-row${selected?' selected':''}" data-match-id="${id}" aria-pressed="${selected?'true':'false'}" title="Show ${esc(h.name)} vs ${esc(a.name)} in the main scoreboard"><div class="league"><b>${esc(l.name||'Football')}</b><span class="live-tag" style="color:${live?'var(--green)':done?'#9fb4c6':'#b8c8d6'}">${esc(dateTime)}</span></div><div class="teamcell home">${teamLogo(h)}<span class="teamlabel">${esc(h.name||'Home')}</span></div><div class="row-score${live?' live':''}">${esc(scoreLabel(m))}</div><div class="teamcell away"><span class="teamlabel">${esc(a.name||'Away')}</span>${teamLogo(a)}</div><div class="arrow">›</div></button>`;
   }
-  function matchesForFilter() {
-    if(activeFilter==='all') return sortedMatches(matches);
-    if(activeFilter==='live') return sortedMatches(matches.filter(isLive));
-    return sortedMatches(matches.filter(m=>String(m.league?.id)===activeFilter));
+  function filterMatches() {
+    let list=matches.filter(m=>isTodayLocal(m)&&(activeFilter==='women'?isWomen(m):!isWomen(m)));
+    if(activeFilter==='live') list=list.filter(isLive);
+    else if(activeFilter==='women') list=matches.filter(m=>isTodayLocal(m)&&isWomen(m));
+    else if(activeFilter==='other') list=list.filter(m=>!isMajor(m));
+    else if(activeFilter==='saudi') list=list.filter(isSaudi);
+    else if(activeFilter!=='all') list=list.filter(m=>String(m.league?.id)===activeFilter);
+    if(activeFilter==='all') return [...list].sort((a,b)=>prestige(b)-prestige(a)||matchGroup(a)-matchGroup(b)||kickoff(a)-kickoff(b));
+    return sortedMatches(list);
+  }
+  function renderPagination(total) {
+    const pages=Math.max(1,Math.ceil(total/PAGE_SIZE)); currentPage=Math.min(currentPage,pages);
+    let el=document.getElementById('matchPagination');
+    if(!el){el=document.createElement('div');el.id='matchPagination';el.className='pagination';matchList.after(el);}
+    el.innerHTML=pages>1?`<button type="button" class="filter" data-page="prev" ${currentPage===1?'disabled':''}>Previous</button><span>Page ${currentPage} of ${pages}</span><button type="button" class="filter" data-page="next" ${currentPage===pages?'disabled':''}>Next</button>`:'';
+    el.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>{currentPage+=b.dataset.page==='next'?1:-1;applyFilter();document.getElementById('matchList').scrollIntoView({behavior:'smooth',block:'start'});}));
   }
   function applyFilter() {
     filterButtons.forEach(b=>{const on=b.dataset.filter===activeFilter;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on));});
-    const shown=matchesForFilter();
-    matchList.innerHTML=shown.length?shown.map(m=>renderRow(m,Number(m.fixture?.id)===Number(selectedMatchId))).join(''):`<div class="empty-state">No matches found for this competition in the current date window. Try again later or choose another tab.</div>`;
+    const shown=filterMatches(),pages=Math.max(1,Math.ceil(shown.length/PAGE_SIZE)); currentPage=Math.min(currentPage,pages);
+    const pageItems=shown.slice((currentPage-1)*PAGE_SIZE,currentPage*PAGE_SIZE);
+    matchList.innerHTML=pageItems.length?pageItems.map(m=>renderRow(m,Number(m.fixture?.id)===Number(selectedMatchId))).join(''):`<div class="empty-state">No matches found for this competition in the current date window. Try another tab or check again later.</div>`;
     countEl.textContent=`${shown.length} MATCH${shown.length===1?'':'ES'}`;
-    matchList.querySelectorAll('[data-match-id]').forEach(button=>button.addEventListener('click',()=>selectMatch(Number(button.dataset.matchId),true)));
+    matchList.querySelectorAll('[data-match-id]').forEach(b=>b.addEventListener('click',()=>selectMatch(Number(b.dataset.matchId),true)));
+    renderPagination(shown.length);
+  }
+  function makeSideFixture(m) {
+    const h=m.teams?.home||{},a=m.teams?.away||{},f=m.fixture||{};
+    return `<button class="side-fixture-button" type="button" data-match-id="${Number(f.id)}"><div><div class="fixture-teams">${teamLogo(h,'mini-logo')}<span>${esc(h.name||'Home')}</span><span style="color:var(--green)">${esc(scoreLabel(m))}</span><span>${esc(a.name||'Away')}</span>${teamLogo(a,'mini-logo')}</div><div class="fixture-date">${esc(m.league?.name||'Football')} · ${esc(statusLabel(m))}</div></div><div class="fixture-time">${esc(localTime(f.date))}</div></button>`;
   }
   function renderUpcoming() {
-    const upcoming=sortedMatches(matches.filter(m=>!isLive(m)&&!isDone(m)&&kickoff(m)>Date.now())).slice(0,8);
-    const makeFixture=m=>`<button class="side-fixture-button" type="button" data-match-id="${Number(m.fixture?.id)}"><div><div class="fixture-teams">${teamLogo(m.teams?.home,'mini-logo')}<span>${esc(m.teams?.home?.name||'Home')}</span><span style="color:var(--green)">VS</span><span>${esc(m.teams?.away?.name||'Away')}</span>${teamLogo(m.teams?.away,'mini-logo')}</div><div class="fixture-date">${esc(m.league?.name||'Football')} · ${esc(localDate(m.fixture?.date))}</div></div><div class="fixture-time">${esc(localTime(m.fixture?.date))}</div></button>`;
-    fixtureList.innerHTML=upcoming.length?upcoming.slice(0,6).map(m=>renderRow(m,Number(m.fixture?.id)===Number(selectedMatchId))).join(''):`<div class="empty-state">No upcoming fixtures in the current date window.</div>`;
-    sideFixtures.innerHTML=upcoming.length?upcoming.slice(0,5).map(makeFixture).join(''):`<div class="empty-state">No upcoming fixtures found.</div>`;
-    const featuredUpcoming=upcoming.find(m=>BIG_TEAMS.some(t=>`${m.teams?.home?.name||''} ${m.teams?.away?.name||''}`.toLowerCase().includes(t)))||upcoming[0];
-    if(featuredUpcoming){
-      const h=featuredUpcoming.teams?.home||{},a=featuredUpcoming.teams?.away||{},f=featuredUpcoming.fixture||{};
-      nextBig.innerHTML=`<span class="eyebrow">FEATURED FIXTURE</span><div class="derby">NEXT BIG MATCH</div><div class="vs-row"><div class="vs-team"><span class="vs-logo">${h.logo?`<img class="mini-logo" style="width:42px;height:42px" src="${esc(h.logo)}" alt="">`:'⚽'}</span>${esc(h.name||'Home')}</div><div class="vs">VS</div><div class="vs-team"><span class="vs-logo">${a.logo?`<img class="mini-logo" style="width:42px;height:42px" src="${esc(a.logo)}" alt="">`:'⚽'}</span>${esc(a.name||'Away')}</div></div><div class="kickoff">${esc(localDate(f.date))} · ${esc(localTime(f.date))}<small>Your local time · ${esc(f.venue?.city||'Venue TBC')}</small></div>`;
-    }
-    fixtureList.querySelectorAll('[data-match-id]').forEach(button=>button.addEventListener('click',()=>selectMatch(Number(button.dataset.matchId),true)));
-    sideFixtures.querySelectorAll('[data-match-id]').forEach(button=>button.addEventListener('click',()=>selectMatch(Number(button.dataset.matchId),true)));
+    const future=sortedMatches(matches.filter(m=>!isWomen(m)&&!isLive(m)&&!isDone(m)&&kickoff(m)>Date.now()));
+    const selectedIsFuture=future.some(m=>Number(m.fixture?.id)===Number(selectedMatchId));
+    const nextCandidates=future.filter(m=>Number(m.fixture?.id)!==Number(selectedMatchId));
+    const next=nextCandidates.sort((a,b)=>prestige(b)-prestige(a)||kickoff(a)-kickoff(b))[0];
+    const fixtureItems=future.filter(m=>Number(m.fixture?.id)!==Number(selectedMatchId)&&Number(m.fixture?.id)!==Number(next?.fixture?.id)).slice(0,6);
+    fixtureList.innerHTML=fixtureItems.length?fixtureItems.map(m=>renderRow(m,false)).join(''):`<div class="empty-state">No additional upcoming fixtures available.</div>`;
+    const todayMatches=sortedMatches(matches.filter(m=>!isWomen(m)&&isTodayLocal(m)&&Number(m.fixture?.id)!==Number(selectedMatchId)));
+    const excluded=new Set(fixtureItems.map(m=>Number(m.fixture?.id)));
+    const sidebar=todayMatches.filter(m=>!excluded.has(Number(m.fixture?.id))&&Number(m.fixture?.id)!==Number(next?.fixture?.id)).slice(0,8);
+    sideFixtures.innerHTML=sidebar.length?sidebar.map(makeSideFixture).join(''):`<div class="empty-state">No other important matches today.</div>`;
+    if(next){const h=next.teams?.home||{},a=next.teams?.away||{},f=next.fixture||{};nextBig.innerHTML=`<span class="eyebrow">FEATURED FIXTURE</span><div class="derby">NEXT BIG MATCH</div><div class="vs-row"><div class="vs-team"><span class="vs-logo">${h.logo?`<img class="mini-logo" style="width:42px;height:42px" src="${esc(h.logo)}" alt="">`:'⚽'}</span>${esc(h.name||'Home')}</div><div class="vs">VS</div><div class="vs-team"><span class="vs-logo">${a.logo?`<img class="mini-logo" style="width:42px;height:42px" src="${esc(a.logo)}" alt="">`:'⚽'}</span>${esc(a.name||'Away')}</div></div><div class="kickoff">${esc(localDate(f.date))} · ${esc(localTime(f.date))}<small>Your local time · ${esc(f.venue?.city||'Venue TBC')}<br>Stadium local time: ${esc(venueDateTime(next))}</small></div>`; nextBig.onclick=()=>selectMatch(Number(f.id),true); nextBig.style.cursor='pointer';}
+    else nextBig.innerHTML='<span class="eyebrow">FEATURED FIXTURE</span><div class="derby">NEXT BIG MATCH</div><div class="empty-state">No eligible future match found. Live and finished matches are never shown here.</div>';
+    fixtureList.querySelectorAll('[data-match-id]').forEach(b=>b.addEventListener('click',()=>selectMatch(Number(b.dataset.matchId),true)));
+    sideFixtures.querySelectorAll('[data-match-id]').forEach(b=>b.addEventListener('click',()=>selectMatch(Number(b.dataset.matchId),true)));
   }
-  function selectMatch(id, userSelected=false) {
-    const found=matches.find(m=>Number(m.fixture?.id)===Number(id));
-    if(!found) return;
-    selectedMatchId=Number(id);
-    renderFeatured(found,userSelected);
-    applyFilter();
-    renderUpcoming();
+  function selectMatch(id,userSelected=false) {
+    const found=matches.find(m=>Number(m.fixture?.id)===Number(id)); if(!found)return;
+    selectedMatchId=Number(id); selectedMatchManual=userSelected;
+    if(userSelected){try{localStorage.setItem(STORAGE_MATCH,String(selectedMatchId));}catch(_){}}
+    renderFeatured(found,userSelected); loadEventsFor(found); applyFilter(); renderUpcoming();
     if(userSelected) document.getElementById('mainScoreboard').scrollIntoView({behavior:'smooth',block:'start'});
   }
   function autoSelect() {
-    const live=sortedMatches(matches.filter(isLive));
-    const upcoming=matches.filter(m=>!isLive(m)&&!isDone(m)&&kickoff(m)>Date.now()).sort((a,b)=>scorePriority(b)-scorePriority(a));
-    const best=live[0] || upcoming[0] || sortedMatches(matches)[0] || matches[0];
-    if(best) { selectedMatchId=Number(best.fixture?.id); renderFeatured(best,false); }
+    let saved=null; try{saved=Number(localStorage.getItem(STORAGE_MATCH)||0)||null;}catch(_){}
+    const available=matches.filter(m=>!isWomen(m));
+    const found=saved&&available.find(m=>Number(m.fixture?.id)===saved);
+    const live=sortedMatches(available.filter(isLive));
+    const future=available.filter(m=>!isLive(m)&&!isDone(m)&&kickoff(m)>Date.now()).sort((a,b)=>prestige(b)-prestige(a)||kickoff(a)-kickoff(b));
+    const finished=sortedMatches(available.filter(isDone));
+    const best=found||live[0]||future[0]||finished[0]||available[0];
+    if(best){selectedMatchId=Number(best.fixture?.id);selectedMatchManual=Boolean(found);renderFeatured(best,Boolean(found));loadEventsFor(best);}
+  }
+  async function loadEventsFor(match) {
+    const id=Number(match?.fixture?.id);
+    if(!id||(!isLive(match)&&!isDone(match))||eventsRequested.has(id)||eventsByFixture.has(id)) return;
+    eventsRequested.add(id);
+    try {
+      const response=await fetch(`${API_BASE}/api/events?fixture=${id}`,{headers:{'Accept':'application/json'}});
+      const data=await response.json().catch(()=>({}));
+      if(Array.isArray(data.response)) eventsByFixture.set(id,data.response);
+    } catch (_) { /* Scores remain available if the optional goal-events request fails. */ }
+    if(Number(selectedMatchId)===id) renderFeatured(match,selectedMatchManual);
   }
   async function loadMatches() {
-    if(!API_BASE || API_BASE.includes('YOUR-WORKER')) {
-      statusEl.className='api-status error';
-      statusEl.textContent='Setup needed: deploy the Cloudflare Worker, then set its URL in app-config.js. No API key belongs in this website.';
-      countEl.textContent='API NOT CONFIGURED';
-      return;
+    if(!API_BASE||API_BASE.includes('YOUR-WORKER')){statusEl.className='api-status error';statusEl.textContent='Setup needed: set the Cloudflare Worker URL in app-config.js. No API key belongs in this website.';countEl.textContent='API NOT CONFIGURED';return;}
+    statusEl.className='api-status';statusEl.textContent='Loading fixtures from the secure football data service…';
+    try{
+      const response=await fetch(`${API_BASE}/api/matches`,{headers:{'Accept':'application/json'}});const data=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(data.message||`Service error ${response.status}`);
+      if(data.errors&&Object.keys(data.errors).length)throw new Error(Object.values(data.errors).flat().join('; '));
+      if(!Array.isArray(data.response))throw new Error(data.message||'Unexpected API response. Check the Worker configuration.');
+      matches=data.response.filter(m=>m.fixture?.id&&m.teams?.home&&m.teams?.away);
+      if(!matches.length){matchList.innerHTML='<div class="empty-state">No fixtures were returned for the current API date window.</div>';statusEl.className='api-status ok';statusEl.textContent='Connected successfully, but no fixtures were returned.';countEl.textContent='0 MATCHES';renderUpcoming();return;}
+      autoSelect();applyFilter();renderUpcoming();
+      const liveCount=matches.filter(m=>!isWomen(m)&&isLive(m)).length;
+      const updated=data.generatedAt?new Date(data.generatedAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):'recently';
+      statusEl.className='api-status ok';statusEl.textContent=`Connected · ${matches.length} fixtures · ${liveCount} live · snapshot ${updated}${data.stale?' · showing cached data':''}. Refresh follows the API cache window.`;
+    }catch(error){statusEl.className='api-status error';statusEl.textContent=`Could not load matches: ${error.message}. Check the Worker deployment and its secret/KV settings.`;countEl.textContent='CONNECTION ERROR';}
+  }
+  filterButtons.forEach(b=>b.addEventListener('click',()=>{activeFilter=b.dataset.filter;currentPage=1;applyFilter();}));
+  const config=window.LIVE_FOOTBALL_CONFIG||{};
+  const videoLink=document.getElementById('videoHighlightsLink'); if(config.youtubeChannelUrl)videoLink.href=config.youtubeChannelUrl; else videoLink.href='#footer';
+  loadMatches();
+
+  // Consent is remembered locally. Optional analytics/ads only start after consent and after real IDs are configured.
+  const consentKey='liveFootball.cookieConsent.v1';
+  const consentStyle=document.createElement('style'); consentStyle.textContent=`.pagination{display:flex;align-items:center;justify-content:center;gap:12px;padding:16px 0;color:#b9c9d7;font-size:13px}.scorers{display:flex;flex-direction:column;gap:3px;margin-top:7px;font-size:11px;line-height:1.35;color:#9db8ca;font-weight:700;max-width:100%;overflow-wrap:anywhere}.scorers span{display:block}.pagination button:disabled{opacity:.4;cursor:not-allowed}.cookie-banner{position:fixed;z-index:100;left:16px;right:16px;bottom:16px;max-width:860px;margin:auto;background:#0b1a29;border:1px solid #2b465e;border-radius:12px;box-shadow:0 15px 50px #0009;padding:17px;color:#e8f1f8}.cookie-banner p{font-size:13px;line-height:1.55;color:#b9c9d7;margin:7px 0 13px}.cookie-actions{display:flex;gap:8px;flex-wrap:wrap}.cookie-actions button{border:1px solid #37536b;border-radius:8px;padding:9px 12px;background:#12283b;color:#f4f8fc;font-weight:800;cursor:pointer}.cookie-actions .accept{background:#0d5c3c;border-color:#24d982}.cookie-banner a{color:#65e9aa}.cookie-settings-panel{position:fixed;z-index:101;inset:0;background:#0009;display:grid;place-items:center;padding:16px}.cookie-settings-card{max-width:460px;width:100%;background:#0b1a29;border:1px solid #2b465e;border-radius:12px;padding:20px;color:#e8f1f8}.cookie-settings-card label{display:flex;gap:9px;margin:13px 0;font-size:14px}.cookie-settings-card p{font-size:13px;color:#b9c9d7;line-height:1.5}.cookie-settings-card button{border:1px solid #37536b;border-radius:8px;padding:9px 12px;background:#12283b;color:#f4f8fc;font-weight:800;cursor:pointer;margin:4px 6px 0 0}`;document.head.appendChild(consentStyle);
+  function startOptionalTools(choice){
+    const cfg=window.LIVE_FOOTBALL_CONFIG||{};
+    if(choice.analytics&&/^G-[A-Z0-9]+$/i.test(cfg.gaMeasurementId||'')){
+      if(!document.querySelector('script[data-ga-loaded]')){window.dataLayer=window.dataLayer||[];window.gtag=function(){window.dataLayer.push(arguments)};window.gtag('consent','default',{analytics_storage:'granted',ad_storage:choice.ads?'granted':'denied',ad_user_data:choice.ads?'granted':'denied',ad_personalization:choice.ads?'granted':'denied',wait_for_update:500});const g=document.createElement('script');g.async=true;g.src=`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(cfg.gaMeasurementId)}`;g.dataset.gaLoaded='true';document.head.appendChild(g);window.gtag('js',new Date());window.gtag('config',cfg.gaMeasurementId,{'anonymize_ip':true});}
     }
-    statusEl.className='api-status'; statusEl.textContent='Loading fixtures from the secure football data service…';
-    try {
-      const response=await fetch(`${API_BASE}/api/matches`,{headers:{'Accept':'application/json'}});
-      const data=await response.json().catch(()=>({}));
-      if(!response.ok) throw new Error(data.message||`Service error ${response.status}`);
-      if(data.errors && Object.keys(data.errors).length) throw new Error(Object.values(data.errors).flat().join('; '));
-      if(!Array.isArray(data.response)) throw new Error(data.message||'Unexpected API response. Check the Worker configuration.');
-      matches=data.response.filter(m=>m.fixture?.id && m.teams?.home && m.teams?.away);
-      if(!matches.length) {
-        matchList.innerHTML='<div class="empty-state">The API connected, but no fixtures were returned for this date window. Check competition coverage and API usage.</div>';
-        statusEl.className='api-status ok'; statusEl.textContent='Connected successfully, but no matches were returned.';
-        countEl.textContent='0 MATCHES'; return;
-      }
-      const oldSelected=selectedMatchId;
-      if(oldSelected && matches.some(m=>Number(m.fixture?.id)===Number(oldSelected))) selectMatch(oldSelected,false); else autoSelect();
-      applyFilter(); renderUpcoming();
-      const liveCount=matches.filter(isLive).length;
-      const updated=data.generatedAt?new Date(data.generatedAt).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}):'recently';
-      statusEl.className='api-status ok';
-      statusEl.textContent=`Connected · ${matches.length} fixtures · ${liveCount} live · data snapshot ${updated}. Refresh availability depends on the API plan and cache window.`;
-    } catch(error) {
-      statusEl.className='api-status error'; statusEl.textContent=`Could not load matches: ${error.message}. Check that the Worker is deployed and its API secret and KV binding are configured.`;
-      countEl.textContent='CONNECTION ERROR';
+    if(choice.ads&&/^ca-pub-\d+$/.test(cfg.adsensePublisherId||'')&&cfg.adsensePublisherId!=='ca-pub-0000000000000000'){
+      if(!document.querySelector('script[data-adsense-loaded]')){const a=document.createElement('script');a.async=true;a.crossOrigin='anonymous';a.src=`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(cfg.adsensePublisherId)}`;a.dataset.adsenseLoaded='true';document.head.appendChild(a);}
+      const slots=Array.isArray(cfg.adsenseSlots)?cfg.adsenseSlots:[];
+      document.querySelectorAll('main .ad').forEach((ad,index)=>{
+        const slot=String(slots[index]||'');
+        if(!/^\d+$/.test(slot)||ad.querySelector('.adsbygoogle')) return;
+        const ins=document.createElement('ins');ins.className='adsbygoogle';ins.style.display='block';ins.style.minWidth='250px';ins.style.width='100%';ins.style.minHeight='90px';ins.dataset.adClient=cfg.adsensePublisherId;ins.dataset.adSlot=slot;ins.dataset.adFormat='auto';ins.dataset.fullWidthResponsive='true';
+        const content=ad.querySelector('div');if(content)content.replaceChildren(ins);else ad.appendChild(ins);
+        try{(window.adsbygoogle=window.adsbygoogle||[]).push({});}catch(_){}
+      });
     }
   }
-  filterButtons.forEach(button=>button.addEventListener('click',()=>{activeFilter=button.dataset.filter;applyFilter();}));
-  loadMatches();
-  // Deliberately no rapid polling: API-FOOTBALL's free quota is only 100 requests/day.
-  // A manual refresh button can be added after the cache/plan is confirmed.
+  function saveConsent(choice){try{localStorage.setItem(consentKey,JSON.stringify({...choice,savedAt:new Date().toISOString()}));}catch(_){};if(typeof window.gtag==='function')window.gtag('consent','update',{analytics_storage:choice.analytics?'granted':'denied',ad_storage:choice.ads?'granted':'denied',ad_user_data:choice.ads?'granted':'denied',ad_personalization:choice.ads?'granted':'denied'});document.getElementById('cookieBanner')?.remove();document.getElementById('cookieSettingsPanel')?.remove();startOptionalTools(choice);}
+  function openCookieSettings(){document.getElementById('cookieSettingsPanel')?.remove();const panel=document.createElement('div');panel.id='cookieSettingsPanel';panel.className='cookie-settings-panel';panel.innerHTML=`<div class="cookie-settings-card" role="dialog" aria-modal="true" aria-labelledby="cookieSettingsTitle"><h3 id="cookieSettingsTitle">Privacy & Cookie Settings</h3><p>Necessary storage keeps the site’s basic features working. Optional analytics and advertising are off unless you choose to enable them.</p><label><input type="checkbox" checked disabled> Necessary storage (always active)</label><label><input id="consentAnalytics" type="checkbox"> Analytics cookies (Google Analytics)</label><label><input id="consentAds" type="checkbox"> Advertising cookies (Google AdSense)</label><button id="saveCookieSettings">Save choices</button><button id="cancelCookieSettings">Cancel</button></div>`;document.body.appendChild(panel);let existing={};try{existing=JSON.parse(localStorage.getItem(consentKey)||'{}');}catch(_){};panel.querySelector('#consentAnalytics').checked=Boolean(existing.analytics);panel.querySelector('#consentAds').checked=Boolean(existing.ads);panel.querySelector('#saveCookieSettings').onclick=()=>saveConsent({analytics:panel.querySelector('#consentAnalytics').checked,ads:panel.querySelector('#consentAds').checked});panel.querySelector('#cancelCookieSettings').onclick=()=>panel.remove();panel.addEventListener('click',e=>{if(e.target===panel)panel.remove();});}
+  function showCookieBanner(){let saved=null;try{saved=JSON.parse(localStorage.getItem(consentKey)||'null');}catch(_){};if(saved&&typeof saved==='object'){startOptionalTools(saved);return;}const banner=document.createElement('section');banner.id='cookieBanner';banner.className='cookie-banner';banner.innerHTML=`<strong>Privacy & Cookie Choices</strong><p>We use necessary storage to operate this website. With your permission, optional analytics can help us understand visits and advertising tools may display relevant ads. You can change your choice at any time in the footer. Read our <a href="about.html">About &amp; Privacy information</a>.</p><div class="cookie-actions"><button class="accept" id="acceptAllCookies">Accept all</button><button id="rejectOptionalCookies">Reject optional</button><button id="customizeCookies">Settings</button></div>`;document.body.appendChild(banner);banner.querySelector('#acceptAllCookies').onclick=()=>saveConsent({analytics:true,ads:true});banner.querySelector('#rejectOptionalCookies').onclick=()=>saveConsent({analytics:false,ads:false});banner.querySelector('#customizeCookies').onclick=openCookieSettings;}
+  document.getElementById('privacySettingsLink')?.addEventListener('click',e=>{e.preventDefault();openCookieSettings();});
+  showCookieBanner();
 })();
 </script>
+
 
 </body>
 </html>
