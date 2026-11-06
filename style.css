@@ -1,0 +1,280 @@
+
+:root{--bg:#030a12;--panel:#091725;--panel2:#0d1d2c;--line:#20364a;--muted:#9db0c2;--white:#f7faff;--green:#2df58a;--red:#ff3048;--blue:#159cff}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(ellipse at 50% -20%,#102a43 0,transparent 50%),var(--bg);color:var(--white);font-family:"Arial Narrow","Roboto Condensed",Arial,sans-serif}
+a{color:inherit;text-decoration:none}
+button{font:inherit}
+.wrap{width:min(1420px,100%);margin:auto;padding:0 24px}
+header{position:sticky;top:0;z-index:20;background:rgba(3,10,18,.96);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.topbar{height:60px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.brand{display:flex;align-items:center;gap:10px;font-size:clamp(23px,2.6vw,34px);font-weight:1000;letter-spacing:-1.2px;white-space:nowrap}
+.ball{display:inline-grid;place-items:center;width:38px;height:38px;border:2px solid #dce8f5;border-radius:50%;font-size:23px;background:#10283d}
+.brand em{font-style:normal;color:var(--green)}
+nav{display:flex;align-items:center;gap:26px}
+nav a{padding:25px 0 22px;font-size:14px;font-weight:900;color:#c6d2de;border-bottom:3px solid transparent}
+nav a.active,nav a:hover{color:var(--green);border-color:var(--green)}
+.nav-actions{display:flex;align-items:center;gap:10px}
+.iconbtn{width:40px;height:40px;border:1px solid var(--line);border-radius:10px;background:#0a1826;color:white;cursor:pointer;font-size:18px}
+main{padding-top:22px;padding-bottom:36px}
+.section-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:14px 0}.section-heading-copy{display:flex;flex-direction:column;gap:5px;min-width:0}.section-subtitle{font-size:12px;color:var(--muted);letter-spacing:.2px}.freshness{font-size:11px;color:#8da7bc;white-space:nowrap}
+h1,h2,h3,p{margin-top:0}
+h1{font-size:clamp(24px,2.8vw,34px);font-weight:1000;letter-spacing:-.6px;text-transform:none;margin-bottom:0}
+h2{font-size:clamp(23px,3vw,32px);font-weight:1000;letter-spacing:-.5px;text-transform:uppercase;margin-bottom:15px}
+h3{font-size:20px;font-weight:1000;text-transform:uppercase;margin-bottom:0}
+.livepill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid #176e4a;background:#0c261c;color:var(--green);border-radius:9px;font-size:13px;font-weight:1000;white-space:nowrap}
+.pulse{display:inline-block;height:9px;width:9px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green);animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.45}}
+.ad{position:relative;min-height:96px;margin:20px 0;border:1px dashed #34536d;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;text-align:center;padding:18px;background:linear-gradient(110deg,#0d2034,#07121f 55%,#102a41)}
+.ad:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(125deg,transparent 0 36px,rgba(65,158,230,.04) 37px 39px);pointer-events:none}
+.ad strong{position:relative;display:block;font-size:clamp(21px,3vw,32px);font-weight:1000;letter-spacing:.3px}
+.ad p{position:relative;color:#b7c7d6;font-size:13px;margin:6px 0 0}
+.ad small{position:absolute;right:10px;top:8px;color:#71889d;font-size:9px;letter-spacing:1px}
+.content-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+.maincol,.sidecol{min-width:0}
+
+/* Tablar: Sichqoncha olib borilganda (:hover) — YASHIL, Ochiq turgan aktiv tab (.active) — QIZIL */
+.filterbar{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 14px}
+.filter{border:1px solid var(--line);border-radius:9px;background:#091725;color:#c6d5e2;padding:10px 14px;font-size:13px;font-weight:900;cursor:pointer;transition:background .15s,border-color .15s,color .15s,box-shadow .15s}
+.filter:hover:not(.active){background:#0d5c3c;border-color:#24d982;color:#ffffff}
+.filter.active{background:linear-gradient(135deg,#c91e36,#7a1021);border-color:var(--red);color:#ffffff;box-shadow:0 0 12px rgba(255,48,72,.35)}
+.date-filterbar{margin:10px 0 14px;padding-bottom:4px}
+.date-filterbar .filter{padding:8px 13px;font-size:12px;letter-spacing:.4px;text-transform:uppercase}
+
+.match-list{display:grid;gap:9px}
+
+/* Liga va Sana sarlavhalari — Barcha panel va bloklarda katta harflar va chiziq/rang bilan ajratilgan */
+.league-group-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;margin-top:10px;border:1px solid #24d982;border-left:4px solid var(--green);border-radius:10px;background:linear-gradient(90deg,#0b2920 0%,#0b1e30 65%,#081523 100%);box-shadow:0 4px 14px rgba(0,0,0,.28)}
+.league-group-banner:first-child{margin-top:0}
+.league-group-title{display:flex;align-items:center;gap:8px;color:var(--green);font-size:13px;font-weight:1000;letter-spacing:1.1px;text-transform:uppercase}
+.league-group-title::before{content:"🏆";font-size:13px}
+.league-group-date{padding:4px 9px;border:1px solid #294861;border-radius:6px;background:#07131f;color:#e3effa;font-size:11px;font-weight:900;letter-spacing:.7px;text-transform:uppercase;white-space:nowrap}
+.league-group-date.live-date{border-color:#1f7a53;background:#0c2d20;color:var(--green)}
+
+/* Panel ichidagi alohida ajratilgan Liga nomi */
+.league-badge-box{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:6px 14px;border:1px solid #24d982;border-radius:8px;background:linear-gradient(90deg,#0b2b20,#0d2236);color:var(--green);font-size:12px;font-weight:1000;letter-spacing:1.1px;text-transform:uppercase;box-shadow:0 0 14px rgba(45,245,138,.12)}
+.row-league-pill{display:inline-block;padding:4px 10px;border:1px solid #265170;border-radius:6px;background:#0b1f31;color:#7ce8b3;font-size:11px;font-weight:1000;letter-spacing:.9px;text-transform:uppercase}
+
+/* Yon paneldagi 6 ta alohida Liga bloki sarlavhalari */
+.side-league-header{padding:12px 14px;border-bottom:1px solid #24d98266;background:linear-gradient(90deg,#0b2920,#091929)}
+.side-league-header .side-league-country{display:block;color:#9db6cc;font-size:10px;font-weight:900;letter-spacing:1.3px;text-transform:uppercase;margin-bottom:3px}
+.side-league-header .side-league-name{display:flex;align-items:center;justify-content:space-between;color:var(--green);font-size:16px;font-weight:1000;letter-spacing:.9px;text-transform:uppercase}
+.side-league-header .side-league-sub{color:#d8e6f3;font-size:10px;font-weight:900;padding:3px 7px;border:1px solid #274a66;border-radius:5px;background:#081523}
+
+/* Yon paneldagi Foydali Ma'lumot / League Spotlight bloki (Reklama o'rniga) */
+.side-info-card{margin:14px 0;padding:14px 15px;border:1px solid #1f4968;border-left:4px solid var(--blue);border-radius:12px;background:linear-gradient(125deg,#0b2135,#071422)}
+.side-info-kicker{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--blue);font-size:10px;font-weight:1000;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px}
+.side-info-kicker span.info-tag{padding:2px 6px;border-radius:4px;background:#0d2c47;color:#7cc8ff;border:1px solid #1e5582}
+.side-info-title{font-size:14px;font-weight:1000;color:var(--white);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+.side-info-text{font-size:12px;line-height:1.5;color:#BDD0E0;margin:0}
+.side-info-link{display:inline-block;margin-top:8px;font-size:11px;font-weight:900;color:var(--green);letter-spacing:.5px;text-transform:uppercase}
+.side-info-link:hover{text-decoration:underline}
+
+/* Hisob ostidagi real-time daqiqa va status ko'rinishi */
+.realtime-badge{display:inline-flex;align-items:center;justify-content:center;gap:5px;margin-top:4px;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:1000;letter-spacing:.5px;text-transform:uppercase;line-height:1.25}
+.realtime-badge.is-live{background:#0c2f21;border:1px solid #1f7a53;color:var(--green)}
+.realtime-badge.is-ht{background:#2b220c;border:1px solid #8a6d1b;color:#ffd454}
+.realtime-badge.is-done{background:#111f2d;border:1px solid #273e52;color:#a9bdce}
+.realtime-badge.is-upcoming{background:#0c1c2c;border:1px solid #1f3950;color:#c5d6e6}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 1.2s infinite;flex:none}
+
+/* 1-Skrin: Asosiy paneldagi gol mualliflari — kattalashtirilgan va o'qishga qulay */
+.scorers{display:flex;flex-direction:column;align-items:center;gap:5px;margin-top:10px;font-size:clamp(13px,1.35vw,15px);line-height:1.4;color:#e8f3fc;font-weight:800;max-width:100%;overflow-wrap:anywhere}
+.scorers span{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:3px 10px;border-radius:6px;background:rgba(12,35,54,.85);border:1px solid #234763;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.scorers span em{font-style:normal;color:var(--green);font-weight:1000}
+
+.match-row{display:grid;grid-template-columns:minmax(0,1fr) 128px minmax(0,1fr) 20px;grid-template-rows:auto auto;row-gap:10px;column-gap:12px;align-items:center;text-align:center;padding:14px 16px;border:1px solid #1a3043;border-radius:12px;background:linear-gradient(105deg,#0b1927,#08131f);min-width:0;font:inherit;color:inherit;width:100%;cursor:pointer;transition:border-color .15s,background .15s}
+.match-row:hover,.match-row:focus-visible{border-color:#2df58a;outline:none}
+.match-row.selected{border-color:var(--red);box-shadow:inset 3px 0 0 var(--red);background:linear-gradient(105deg,#261019,#08131f)}
+.match-row[hidden]{display:none!important}
+.match-row .league{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;text-align:center;font-size:12px;line-height:1.35}
+.match-row .teamcell{min-width:0;display:flex;align-items:center;gap:8px;font-size:clamp(13px,1.25vw,16px);font-weight:900}
+.match-row .teamcell.home{grid-column:1;grid-row:2;justify-content:flex-end;text-align:right}
+.match-row .row-score{grid-column:2;grid-row:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:clamp(19px,2vw,24px);font-weight:1000;text-align:center;font-variant-numeric:tabular-nums;background:#102333;border:1px solid #203b50;border-radius:9px;padding:8px 6px;white-space:normal}
+.match-row .row-score.live{color:var(--green);background:#09271d;border-color:#1c6e4b}
+.match-row .row-status{display:block;font-size:10px;line-height:1.3;font-weight:900;white-space:normal}
+.match-row .teamcell.away{grid-column:3;grid-row:2;justify-content:flex-start;text-align:left}
+.match-row .arrow{grid-column:4;grid-row:2;font-size:24px;color:#a9bbca;text-align:right}
+.match-row .teamlabel{overflow-wrap:anywhere;word-break:normal}
+.mini-crest{font-size:26px;flex:none}
+.side-card{border:1px solid #1d3449;border-radius:14px;background:#091725;overflow:hidden;margin-bottom:14px}
+.side-title{display:flex;align-items:center;justify-content:space-between;padding:15px 15px 12px;font-size:18px;font-weight:1000;text-transform:uppercase}
+.side-title span{color:var(--green)}
+.next-feature{padding:18px 13px;background:radial-gradient(ellipse at 50% 0,#173b61,#091725 75%);text-align:center}
+.eyebrow{display:inline-block;padding:6px 10px;border-radius:6px;background:#0d4d8a;font-size:11px;font-weight:1000;letter-spacing:.8px}
+.derby{font-size:25px;font-weight:1000;margin:12px 0 17px}
+.vs-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
+.next-feature .featured-league{margin:0 0 16px;padding:0 6px;line-height:1.5}
+.next-feature .vs-row{margin-top:4px}
+.vs-team{font-weight:1000;font-size:12px}
+.vs-logo{display:block;font-size:42px;margin-bottom:6px}
+.vs-center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.vs{font-size:23px;font-weight:1000;color:#dce7f2;font-variant-numeric:tabular-nums}
+.kickoff{border-top:1px solid #25415a;margin-top:16px;padding-top:13px;font-size:14px;font-weight:900;line-height:1.8}
+.kickoff small{display:block;color:#a9bdce;font-weight:600}
+.fixture-list{padding:0 10px 10px}
+.small-ad{min-height:105px;margin:14px 0}
+.small-ad strong{font-size:20px}
+.bottom-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}
+.promo{min-height:100px;border:1px solid #23425b;border-radius:12px;background:linear-gradient(115deg,#102b46,#071421);padding:17px;display:flex;align-items:center;gap:13px;cursor:pointer;text-align:left;color:inherit;width:100%;transition:border-color .15s,transform .15s}
+.promo:hover{border-color:var(--green);transform:translateY(-1px)}
+.promo-icon{display:grid;place-items:center;width:44px;height:44px;flex:none;border:1px solid #2678b3;border-radius:50%;font-size:22px}
+.promo b{display:block;font-size:16px;font-weight:1000;text-transform:uppercase}
+.promo small{display:block;color:#a9bdce;margin-top:5px;font-size:12px}
+footer{border-top:1px solid #1b3042;margin-top:28px;padding:23px 0;color:#8fa5b8}
+.footer-inner{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}
+footer strong{font-size:20px;color:#fff}
+footer a{margin-left:16px;font-size:12px}
+
+.data-slot{border:1px solid #23435b;border-radius:15px;background:#06111d;overflow:hidden}
+.hero-slot{min-height:320px;padding:18px 24px;background:radial-gradient(ellipse at 50% 100%,#164f3b 0,transparent 58%),linear-gradient(110deg,#0d2945,#07111d 52%,#102a42)}
+.slot-top{display:flex;justify-content:space-between;align-items:center;gap:10px;color:#90a8bd;font-size:10px;font-weight:900;letter-spacing:1.2px}
+.slot-badge{padding:7px 10px;background:#123b2a;color:var(--green);border:1px solid #1c6845;border-radius:6px}
+.slot-size{color:#7893aa}
+.hero-placeholder{display:grid;grid-template-columns:1fr minmax(150px,.9fr) 1fr;align-items:center;gap:12px;margin:14px 0 12px;text-align:center}
+.placeholder-team{min-width:0}
+.placeholder-crest{width:clamp(64px,7vw,92px);height:clamp(64px,7vw,92px);display:grid;place-items:center;margin:0 auto 10px;border:1px dashed #45647c;border-radius:18px;background:#0a1d2d;color:#8fa8bc;font-size:10px;font-weight:900;letter-spacing:.5px}
+.placeholder-team-name{font-size:clamp(15px,2vw,24px);font-weight:1000}
+.placeholder-score{display:flex;flex-direction:column;align-items:center;gap:6px}
+.placeholder-score>span{font-size:clamp(52px,7vw,86px);font-weight:1000;line-height:.9;color:#f4f8fc}
+.placeholder-score b{font-size:clamp(15px,1.8vw,22px)!important;color:var(--green);letter-spacing:.5px!important;line-height:1.2}
+.placeholder-score small{font-size:11px;color:#92a9bd;font-weight:900;letter-spacing:.4px}
+.empty-state{padding:18px 14px;border:1px dashed #31506a;border-radius:12px;color:#a8bbcb;text-align:center;background:#081522;font-size:12px;line-height:1.55;margin-top:8px}
+.team-logo{width:clamp(58px,7vw,88px);height:clamp(58px,7vw,88px);object-fit:contain;filter:drop-shadow(0 6px 8px #0007)}
+.mini-logo{width:27px;height:27px;object-fit:contain;flex:none}
+.side-fixture-button{display:grid;grid-template-columns:1fr;gap:6px;align-items:center;width:100%;padding:12px 6px;border:0;border-top:1px solid #1b3042;background:transparent;color:inherit;text-align:center;cursor:pointer}
+.side-fixture-button:first-child{border-top:0}
+.side-fixture-button:hover{background:#0c2030}
+.side-fixture-button .fixture-teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;font-size:12px;font-weight:900;line-height:1.3}
+.side-fixture-button .side-team-home{display:flex;align-items:center;justify-content:flex-end;gap:5px;text-align:right;min-width:0}
+.side-fixture-button .side-team-away{display:flex;align-items:center;justify-content:flex-start;gap:5px;text-align:left;min-width:0}
+.side-fixture-button .side-team-home span,.side-fixture-button .side-team-away span{overflow-wrap:anywhere}
+.side-fixture-button .side-score-box{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 8px;border-radius:6px;background:#0e2233;border:1px solid #224059;color:var(--green);font-weight:1000;font-size:13px;min-width:54px}
+.side-fixture-button .fixture-date{font-size:11px;color:#b3c2cf;text-align:center;line-height:1.35}
+.pagination button{min-width:88px}
+.promo.youtube-promo .promo-icon{display:grid;place-items:center;width:52px;height:38px;border-radius:10px;background:#ff0033;color:#fff;font-size:0;border:0;flex:none}
+.promo.youtube-promo .promo-icon svg{width:52px;height:38px;display:block}
+.section-head{margin-top:10px;margin-bottom:18px}
+.section-subtitle{line-height:1.4}
+.section-head#live h1{font-size:13px;font-weight:1000;letter-spacing:.4px;text-transform:uppercase;line-height:1.4}
+.api-status,.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.search-wrap{display:flex;align-items:center;gap:7px;order:2;margin-left:auto;min-width:40px}
+nav{order:3;margin-left:24px}
+#siteSearch{width:clamp(180px,22vw,290px);height:40px;padding:0 40px 0 12px;border:1px solid var(--line);border-radius:10px;background:#081725;color:#f4f8fc;outline:none}
+#siteSearch:focus{border-color:var(--green);box-shadow:0 0 0 2px #24d98222}
+#siteSearch[hidden],#searchClear[hidden]{display:none!important}
+.featured-empty{min-height:205px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;color:#b8c9d8}
+.featured-empty strong{font-size:clamp(19px,2vw,25px);color:#f3f7fb}
+.featured-empty span{font-size:13px;color:#91a8bc}
+.featured-league{margin:16px 0 8px;text-align:center}
+.featured-date{font-size:12px;color:#a9bdce;font-weight:700;line-height:1.4}
+.featured-venue{margin-top:14px;padding-top:12px;border-top:1px solid #25415a;text-align:center;color:#b8c9d8;font-size:13px}
+
+/* League Tables Modal (6-talab bo'yicha tezkor turnir jadvali oynasi) */
+.tables-modal{position:fixed;z-index:110;inset:0;background:rgba(2,8,15,.82);backdrop-filter:blur(8px);display:grid;place-items:center;padding:16px}
+.tables-modal[hidden]{display:none!important}
+.tables-dialog{width:min(880px,100%);max-height:88vh;display:flex;flex-direction:column;border:1px solid #284c69;border-radius:16px;background:linear-gradient(145deg,#0a1b2b,#06101a);box-shadow:0 24px 60px rgba(0,0,0,.75);overflow:hidden}
+.tables-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;border-bottom:1px solid #1d364c;background:#081523}
+.tables-head h3{margin:0;color:var(--green);font-size:19px;letter-spacing:.8px}
+.tables-close{width:36px;height:36px;border:1px solid #29465e;border-radius:8px;background:#0d2133;color:#fff;font-size:18px;cursor:pointer}
+.tables-close:hover{border-color:var(--red);background:#5c101d}
+.tables-tabs{display:flex;gap:7px;flex-wrap:wrap;padding:12px 20px;border-bottom:1px solid #182e42;background:#07121e}
+.tables-body{padding:16px 20px;overflow-y:auto;display:grid;gap:14px}
+.standings-table{width:100%;border-collapse:collapse;font-size:13px}
+.standings-table th,.standings-table td{padding:9px 8px;border-bottom:1px solid #162a3d;text-align:center}
+.standings-table th{color:#8fa9bf;font-size:11px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;background:#091827}
+.standings-table td.st-team{text-align:left;font-weight:900;display:flex;align-items:center;gap:8px}
+.standings-table tr:hover{background:#0c2033}
+.st-rank{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:6px;background:#102436;font-weight:1000;font-size:12px}
+.st-rank.top4{background:#0c3524;color:var(--green);border:1px solid #1d6b47}
+.official-table-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 14px;border:1px solid #23445e;border-radius:10px;background:#091929}
+.official-table-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:8px;background:var(--green);color:#04150d;font-weight:1000;font-size:12px;letter-spacing:.5px;text-transform:uppercase}
+
+@media(max-width:1000px){
+  .content-grid{grid-template-columns:minmax(0,1fr) 300px}
+  .wrap{padding-left:18px;padding-right:18px}
+  .match-row{grid-template-columns:minmax(0,1fr) 110px minmax(0,1fr) 16px;gap:8px;padding:12px 10px}
+}
+@media(max-width:760px){
+  .topbar{height:auto;min-height:65px;flex-wrap:wrap;padding-top:10px;padding-bottom:8px;position:relative}
+  .ball{width:32px;height:32px;font-size:19px}
+  nav{order:3;width:100%;justify-content:space-between;gap:12px;margin-left:0}
+  nav a{padding:9px 0 7px;font-size:12px}
+  .search-wrap{order:2;margin-left:auto}
+  .search-wrap #siteSearch{position:absolute;top:67px;right:14px;z-index:20;width:min(78vw,320px);box-shadow:0 10px 25px #0008}
+  .search-wrap #searchClear{position:absolute;top:67px;right:14px;z-index:21;width:32px;height:32px;min-width:32px;border:0;background:transparent}
+  .content-grid{grid-template-columns:1fr}
+  .sidecol{display:grid;grid-template-columns:1fr;gap:0}
+  .bottom-grid{grid-template-columns:1fr}
+  .promo{min-height:78px}
+  .match-row{grid-template-columns:minmax(0,1fr) 98px minmax(0,1fr);gap:6px;padding:12px 8px}
+  .match-row .arrow{display:none}
+  .match-row .teamcell{font-size:12px;gap:4px}
+  .match-row .mini-logo{width:22px;height:22px}
+  .hero-slot{padding:16px 10px}
+  .hero-placeholder{grid-template-columns:minmax(0,1fr) minmax(96px,.85fr) minmax(0,1fr);gap:5px}
+  .hero-placeholder .team-logo{width:52px;height:52px}
+  .hero-placeholder .placeholder-team-name{font-size:clamp(12px,3vw,17px)}
+  .hero-placeholder .placeholder-score>span{font-size:clamp(35px,9vw,56px)}
+  .scorers{font-size:12.5px}
+  .league-group-banner{padding:8px 10px}
+  .league-group-title{font-size:11px}
+}
+@media(max-width:420px){
+  .wrap{padding-left:11px;padding-right:11px}
+  .brand{font-size:22px}
+  .match-row{grid-template-columns:minmax(0,1fr) 86px minmax(0,1fr);gap:4px;padding:10px 5px}
+  .match-row .row-score{font-size:15px;padding:6px 3px}
+  .match-row .row-status{font-size:9px}
+  .match-row .teamcell{font-size:10px}
+  .match-row .mini-logo{width:18px;height:18px}
+}
+
+/* cookie / pagination */
+.pagination{display:flex;align-items:center;justify-content:center;gap:12px;padding:16px 0;color:#b9c9d7;font-size:13px}.pagination button:disabled{opacity:.4;cursor:not-allowed}.cookie-banner{position:fixed;z-index:100;left:16px;right:16px;bottom:16px;max-width:860px;margin:auto;background:#0b1a29;border:1px solid #2b465e;border-radius:12px;box-shadow:0 15px 50px #0009;padding:17px;color:#e8f1f8}.cookie-banner p{font-size:13px;line-height:1.55;color:#b9c9d7;margin:7px 0 13px}.cookie-actions{display:flex;gap:8px;flex-wrap:wrap}.cookie-actions button{border:1px solid #37536b;border-radius:8px;padding:9px 12px;background:#12283b;color:#f4f8fc;font-weight:800;cursor:pointer}.cookie-actions .accept{background:#0d5c3c;border-color:#24d982}.cookie-banner a{color:#65e9aa}.cookie-settings-panel{position:fixed;z-index:101;inset:0;background:#0009;display:grid;place-items:center;padding:16px}.cookie-settings-card{max-width:460px;width:100%;background:#0b1a29;border:1px solid #2b465e;border-radius:12px;padding:20px;color:#e8f1f8}.cookie-settings-card label{display:flex;gap:9px;margin:13px 0;font-size:14px}.cookie-settings-card p{font-size:13px;color:#b9c9d7;line-height:1.5}.cookie-settings-card button{border:1px solid #37536b;border-radius:8px;padding:9px 12px;background:#12283b;color:#f4f8fc;font-weight:800;cursor:pointer;margin:4px 6px 0 0}
+
+/* ===== V2 qo'shimchalar ===== */
+.filter .cnt{margin-left:6px;padding:1px 6px;border-radius:6px;background:#ffffff1f;font-size:11px}
+.chip-row{margin:0 0 12px}.chip-row .filter{padding:6px 11px;font-size:12px}
+.more-btn{display:block;width:100%;margin:6px 0 2px;padding:9px;border:1px dashed #31506a;border-radius:10px;background:#081522;color:#9fe3c0;font-weight:900;cursor:pointer}
+.more-btn:hover{border-color:var(--green)}
+.match-row.compact{grid-template-rows:auto}
+.match-row.compact .teamcell.home,.match-row.compact .row-score,.match-row.compact .teamcell.away,.match-row.compact .arrow{grid-row:1}
+.row-score .row-time{font-size:18px}
+.hero-slot .status-line{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:6px}
+.admin-chip{display:inline-block;padding:5px 10px;border:1px solid #8a6d1b;border-radius:7px;background:#2b220c;color:#ffd454;font-size:11px;font-weight:900;letter-spacing:.6px}
+.slot-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.slot-actions button,.slot-actions a{border:1px solid #29465e;border-radius:8px;background:#0d2133;color:#dfeaf5;padding:7px 12px;font-size:12px;font-weight:900;cursor:pointer}
+.slot-actions button:hover{border-color:var(--green)}
+.centre{margin-top:16px;border:1px solid #23435b;border-radius:15px;background:#06111d;overflow:hidden}
+.centre-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px;border-bottom:1px solid #182e42;background:#07121e}
+.centre-tabs .filter{padding:8px 12px;font-size:12px}
+.centre-body{padding:14px 16px;min-height:120px}
+.tl-row{display:grid;grid-template-columns:1fr 64px 1fr;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #12263a;font-size:14px}
+.tl-row .tl-h{text-align:right}.tl-row .tl-a{text-align:left}
+.tl-m{text-align:center;font-weight:1000;color:var(--green);font-variant-numeric:tabular-nums}
+.tl-row small{color:#8da7bc}
+.info-line{margin-top:12px;color:#9db0c2;font-size:12px;text-align:center;line-height:1.7}
+.sbar{margin:13px 0}.sbar .l{display:flex;justify-content:space-between;font-size:14px;font-weight:900;margin-bottom:5px}.sbar .l span{color:#b8c9d8;font-weight:700}
+.sbar .b{height:10px;border-radius:6px;background:#159cff;overflow:hidden}.sbar .b i{display:block;height:100%;background:var(--green)}
+.pitches{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pitch h4{display:flex;justify-content:space-between;margin:0 0 8px;padding-bottom:5px;border-bottom:3px solid var(--green);font-size:15px;text-transform:uppercase}.pitch h4 span{color:#ffd454}
+.pitch.away h4{border-color:var(--blue)}
+.fld{position:relative;aspect-ratio:4/5;border-radius:12px;border:2px solid #ffffff40;background:repeating-linear-gradient(0deg,#1d6a3b 0 9%,#195f35 9% 18%);overflow:hidden}
+.fld:before{content:"";position:absolute;left:24%;right:24%;bottom:0;height:16%;border:2px solid #ffffff40;border-bottom:0}
+.pl{position:absolute;transform:translate(-50%,-50%);text-align:center;width:22%}
+.pl i{display:flex;width:clamp(26px,3.4vw,40px);height:clamp(26px,3.4vw,40px);border-radius:50%;margin:0 auto;align-items:center;justify-content:center;font-style:normal;font-weight:900;font-size:clamp(12px,1.6vw,17px);border:2px solid #fff;box-shadow:0 3px 8px #0009}
+.pl span{display:inline-block;max-width:100%;margin-top:3px;padding:0 5px;border-radius:6px;background:#000a;font-size:clamp(10px,1.25vw,13px);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bench{margin-top:10px;font-size:12px;color:#9db0c2;line-height:1.6}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}.tbl th{color:#8da7bc;font-size:11px;text-align:right;padding:6px 5px;border-bottom:1px solid #1d3449}.tbl td{padding:7px 5px;text-align:right;border-bottom:1px solid #12263a;font-variant-numeric:tabular-nums}
+.tbl th:nth-child(2),.tbl td:nth-child(2){text-align:left}.tbl td.t{display:flex;align-items:center;gap:8px;font-weight:800}.tbl tr.hl td{background:#0d2a21;color:var(--green)}.tbl td b{color:#fff}
+.tbl img{width:20px;height:20px;object-fit:contain}.tbl-wrap{max-height:430px;overflow:auto}
+.grp-name{margin:12px 0 4px;color:var(--green);font-size:12px;font-weight:1000;letter-spacing:1px;text-transform:uppercase}
+.vid{display:block;width:100%;aspect-ratio:16/9;border:0;border-radius:12px;background:#000}
+.spot-body{padding:6px 12px 14px;text-align:center}.spot-body .vs-row{cursor:pointer}
+.spot-body .kickoff{margin-top:12px}
+.comp-list{padding:0 10px 12px;display:grid;gap:6px}.comp-list button{display:flex;justify-content:space-between;align-items:center;border:1px solid #1a3043;border-radius:9px;background:#08131f;color:#dfeaf5;padding:9px 11px;font-size:13px;font-weight:800;cursor:pointer;text-align:left}.comp-list button:hover{border-color:var(--green)}.comp-list small{color:#8da7bc}
+body.stream .ad,body.stream .cookie-banner,body.stream .bottom-grid{display:none!important}
+@media(max-width:760px){.pitches{grid-template-columns:1fr}.tl-row{grid-template-columns:1fr 54px 1fr;font-size:13px}.centre-body{padding:12px}}
+.hero-placeholder .scorers{overflow-wrap:break-word}.scorers span em{white-space:nowrap}
+@media(max-width:760px){.scorers span{font-size:12px;padding:3px 6px;flex-wrap:wrap}}
