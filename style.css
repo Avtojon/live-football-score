@@ -278,3 +278,26 @@ body.stream .ad,body.stream .cookie-banner,body.stream .bottom-grid{display:none
 @media(max-width:760px){.pitches{grid-template-columns:1fr}.tl-row{grid-template-columns:1fr 54px 1fr;font-size:13px}.centre-body{padding:12px}}
 .hero-placeholder .scorers{overflow-wrap:break-word}.scorers span em{white-space:nowrap}
 @media(max-width:760px){.scorers span{font-size:12px;padding:3px 6px;flex-wrap:wrap}}
+
+/* ===== Control panel (visible only with ?admin=1) ===== */
+.ctl-fab{position:fixed;right:16px;bottom:16px;z-index:60;background:#2b220c;color:#ffd454;border:1px solid #8a6d1b;border-radius:999px;padding:11px 16px;font:900 12px/1 Arial,sans-serif;letter-spacing:.8px;cursor:pointer;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+.ctl-panel{position:fixed;right:16px;bottom:64px;z-index:61;width:min(420px,calc(100vw - 32px));max-height:calc(100vh - 90px);overflow:auto;background:#0b1a29;border:1px solid #2b465e;border-radius:12px;color:#e8f1f8;box-shadow:0 12px 40px rgba(0,0,0,.6);font-size:13px}
+.ctl-panel[hidden]{display:none}
+.ctl-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid #20364a;position:sticky;top:0;background:#0b1a29}
+.ctl-head button{background:none;border:0;color:#9db0c2;font-size:22px;cursor:pointer}
+.ctl-sec{padding:12px 14px;border-bottom:1px solid #16293b}
+.ctl-sec h4{margin:0 0 8px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--green)}
+.ctl-sec p{margin:0 0 8px;color:#b9c9d7}
+.ctl-sec .bad,.ctl-tbl .bad{color:#ff6b7d}.ctl-tbl .ok{color:var(--green)}
+.ctl-panel button,.ctl-panel select,.ctl-panel input[type=url],.ctl-panel input[type=number]{background:#0d1d2c;color:#e8f1f8;border:1px solid #2b465e;border-radius:7px;padding:8px 10px;font:inherit}
+.ctl-panel button{cursor:pointer;font-weight:900}
+.ctl-panel button:hover{border-color:var(--green)}
+.ctl-panel select,.ctl-panel input[type=url]{width:100%;margin-bottom:8px}
+.ctl-panel input[type=number]{width:64px}
+.ctl-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ctl-row a,.ctl-foot a{color:#ffd454;font-weight:900}
+.ctl-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;margin:10px 0}
+.ctl-grid label{display:flex;gap:6px;align-items:center}
+.ctl-tbl{width:100%;margin-top:6px;border-collapse:collapse}.ctl-tbl td{padding:3px 0;border-bottom:1px solid #16293b}
+.ctl-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:0}
+body.stream .ctl-fab,body.stream .ctl-panel{display:none!important}

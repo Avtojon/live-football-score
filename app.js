@@ -18,31 +18,123 @@
   const HOUR = 3600e3;
   const PAGE = 6;                                    // har ligadan boshida nechta o'yin ko'rsatiladi
 
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (_) { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} },
+    del(k) { try { localStorage.removeItem(k); } catch (_) {} }
+  };
+  /* ESPN competition slugs -> display info (w = importance weight) */
+  const LEAGUES = {
+    'uefa.champions': { n: 'Champions League', c: 'Europe', w: 99 },
+    'eng.1': { n: 'Premier League', c: 'England', w: 100 },
+    'esp.1': { n: 'La Liga', c: 'Spain', w: 95 },
+    'ger.1': { n: 'Bundesliga', c: 'Germany', w: 90 },
+    'ita.1': { n: 'Serie A', c: 'Italy', w: 90 },
+    'fra.1': { n: 'Ligue 1', c: 'France', w: 85 },
+    'uefa.europa': { n: 'Europa League', c: 'Europe', w: 84 },
+    'uefa.europa.conf': { n: 'Conference League', c: 'Europe', w: 70 },
+    'fifa.world': { n: 'World Cup', c: 'World', w: 100 },
+    'uefa.nations': { n: 'Nations League', c: 'Europe', w: 75 },
+    'conmebol.libertadores': { n: 'Copa Libertadores', c: 'South America', w: 65 },
+    'eng.2': { n: 'Championship', c: 'England', w: 60 },
+    'eng.fa': { n: 'FA Cup', c: 'England', w: 66 },
+    'eng.league_cup': { n: 'EFL Cup', c: 'England', w: 55 },
+    'esp.copa_del_rey': { n: 'Copa del Rey', c: 'Spain', w: 55 },
+    'ita.coppa_italia': { n: 'Coppa Italia', c: 'Italy', w: 50 },
+    'ger.dfb_pokal': { n: 'DFB-Pokal', c: 'Germany', w: 50 },
+    'fra.coupe_de_france': { n: 'Coupe de France', c: 'France', w: 45 },
+    'ned.1': { n: 'Eredivisie', c: 'Netherlands', w: 55 },
+    'por.1': { n: 'Primeira Liga', c: 'Portugal', w: 55 },
+    'tur.1': { n: 'Süper Lig', c: 'Türkiye', w: 50 },
+    'sco.1': { n: 'Scottish Premiership', c: 'Scotland', w: 40 },
+    'usa.1': { n: 'MLS', c: 'USA', w: 50 },
+    'bra.1': { n: 'Brasileirão', c: 'Brazil', w: 50 },
+    'arg.1': { n: 'Liga Argentina', c: 'Argentina', w: 45 },
+    'sau.1': { n: 'Saudi Pro League', c: 'Saudi Arabia', w: 45 },
+    'mex.1': { n: 'Liga MX', c: 'Mexico', w: 40 }
+  };
+  const enabledLeagues = () => { const a = store.get('lf_leagues', null); const f = Array.isArray(a) ? a.filter(x => LEAGUES[x]) : []; return f.length ? f : Object.keys(LEAGUES); };
+  const DAYS = () => Math.min(14, Math.max(1, Number(store.get('lf_days', 0)) || Number(CFG.daysAhead) || 6));
+  let lastFull = 0;
+
   /* ================= Holat ================= */
-  const S = { matches: new Map(), leagues: {}, sel: null, tab: null, lg: 'all', q: '', dtab: 'timeline', detail: new Map(), table: new Map(), open: new Set(), gen: null, videos: null, userTab: false };
+  const S = { matches: new Map(), leagues: Object.assign({}, LEAGUES), diag: {}, err: '', pin: store.get('lf_pin', null), localVideos: store.get('lf_videos', {}), sel: null, tab: null, lg: 'all', q: '', dtab: 'timeline', detail: new Map(), table: new Map(), open: new Set(), gen: null, videos: null, userTab: false };
 
   /* ================= Yordamchilar ================= */
   const T = m => Date.parse(m.d) || 0;
   const isLive = m => m.s === 'in' || m.s === 'ht';
-  const fmtTime = d => new Date(d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const fmtTime = d => new Date(d).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
   const dkey = d => { const x = new Date(d); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`; };
-  const fmtDay = d => new Date(d).toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' });
-  const ymd = d => d.toISOString().slice(0, 10).replace(/-/g, '');
+  const fmtDay = d => new Date(d).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+  const ymd = d => `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
   const addDays = (d, n) => new Date(d.getTime() + n * 864e5);
   const minNum = m => parseInt(String(m).replace(/\D.*/, ''), 10) || 0;
   const fm = s => { s = String(s || '').replace("'+", '+'); return /'$/.test(s) ? s : (s ? s + "'" : ''); };
   const lgInfo = id => S.leagues[id] || { n: id, c: '', w: 20 };
   const crest = (t, cls) => t && t.l ? `<img class="${cls}" src="${esc(t.l)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">` : '<span class="mini-crest">⚽</span>';
 
-  async function api(path) {
+  /* ================= ESPN data layer (browser -> ESPN public JSON) ================= */
+  const ESPN = 'https://site.api.espn.com/apis/site/v2/sports/soccer';
+  const ESPN_V2 = 'https://site.api.espn.com/apis/v2/sports/soccer';
+  const BIG = new Set(['real madrid', 'barcelona', 'manchester city', 'manchester united', 'liverpool', 'arsenal', 'chelsea', 'tottenham hotspur', 'bayern munich', 'paris saint-germain', 'juventus', 'inter milan', 'ac milan', 'atlético madrid', 'atletico madrid', 'borussia dortmund', 'napoli']);
+
+  async function getJSON(url) {
+    const r = await fetch(url, { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }
+  async function api(path) {                         // optional fallback: old Cloudflare Worker
+    if (!API) throw new Error('No fallback API configured');
     const r = await fetch(API + path, { cache: 'no-store' });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const j = await r.json();
     if (j && j.ok === false) throw new Error(j.message || 'API error');
     return j;
   }
-
-  /* ================= Ma'lumot yuklash ================= */
+  const teamObj = (x, score) => ({ n: x.team.shortDisplayName || x.team.displayName || x.team.name || '', f: x.team.displayName || '', i: String(x.team.id || ''), l: x.team.logo || '', g: Number(score) || 0 });
+  function mapEvent(ev, lg) {
+    const c = (ev.competitions || [])[0]; if (!c) return null;
+    const cs = c.competitors || [];
+    const H = cs.find(x => x.homeAway === 'home') || cs[0], A = cs.find(x => x.homeAway === 'away') || cs[1];
+    if (!H || !A || !H.team || !A.team) return null;
+    const st = c.status || ev.status || {}, ty = st.type || {}, nm = ty.name || '';
+    let s = ty.state === 'in' ? 'in' : ty.state === 'post' ? 'post' : 'pre';
+    if (nm === 'STATUS_HALFTIME') s = 'ht';
+    if (/POSTPONED|CANCEL|ABANDON/.test(nm)) s = 'pp';
+    const hid = String(H.team.id), e = [];
+    for (const d of c.details || []) {
+      const k = d.scoringPlay ? 'g' : d.yellowCard ? 'y' : d.redCard ? 'r' : '';
+      if (!k) continue;
+      const a = d.athletesInvolved && d.athletesInvolved[0];
+      e.push({ k, m: (d.clock && d.clock.displayValue) || '', t: String(d.team && d.team.id) === hid ? 'h' : 'a', p: (a && (a.displayName || a.fullName)) || '', q: d.penaltyKick ? 'p' : d.ownGoal ? 'o' : '' });
+    }
+    const li = LEAGUES[lg] || { w: 20 };
+    const bonus = ([H, A].filter(x => BIG.has(String(x.team.displayName || '').toLowerCase())).length) * 30;
+    const note = c.notes && c.notes[0] && c.notes[0].headline;
+    return {
+      id: String(ev.id), lg, d: ev.date || c.date, s, c: st.displayClock || '', sd: ty.shortDetail || ty.detail || '',
+      v: c.venue && c.venue.fullName || '', ct: c.venue && c.venue.address && c.venue.address.city || '', nt: note || '',
+      pr: li.w * 10 + bonus, h: teamObj(H, H.score), a: teamObj(A, A.score), e
+    };
+  }
+  async function espnRange(from, to, ids) {
+    ids = ids || enabledLeagues();
+    const res = await Promise.allSettled(ids.map(lg => getJSON(`${ESPN}/${lg}/scoreboard?dates=${ymd(from)}-${ymd(to)}&limit=500`)));
+    const matches = [];
+    res.forEach((r, i) => {
+      const lg = ids[i];
+      if (r.status === 'fulfilled') {
+        const evs = (r.value.events || []).map(ev => mapEvent(ev, lg)).filter(Boolean);
+        matches.push(...evs); S.diag[lg] = { ok: true, n: evs.length, t: Date.now() };
+      } else S.diag[lg] = { ok: false, err: String(r.reason && r.reason.message || r.reason), t: Date.now() };
+    });
+    if (!res.some(r => r.status === 'fulfilled')) throw new Error('ESPN is unreachable from this browser (' + (S.diag[ids[0]] && S.diag[ids[0]].err || 'network') + ')');
+    return { matches, leagues: LEAGUES, generatedAt: new Date().toISOString() };
+  }
+  async function fetchRange(from, to, ids) {
+    try { return await espnRange(from, to, ids); }
+    catch (e) { try { return await api(`/api/matches?from=${ymd(from)}&to=${ymd(to)}`); } catch (_) { throw e; } }
+  }
   function merge(js) {
     Object.assign(S.leagues, js.leagues || {});
     for (const m of js.matches || []) S.matches.set(m.id, m);
@@ -50,27 +142,77 @@
   }
   async function loadWeek() {
     const now = new Date();
-    merge(await api(`/api/matches?from=${ymd(addDays(now, -1))}&to=${ymd(addDays(now, Number(CFG.daysAhead) || 6))}`));
+    const js = await fetchRange(addDays(now, -2), addDays(now, DAYS() + 1));
+    S.matches.clear(); merge(js); S.err = ''; lastFull = Date.now();
   }
   async function pollLive() {
-    const now = new Date();
-    merge(await api(`/api/matches?from=${ymd(addDays(now, -1))}&to=${ymd(now)}`));
+    const now = Date.now(), ids = [...new Set([...S.matches.values()].filter(m => isLive(m) || Math.abs(T(m) - now) < 4 * HOUR).map(m => m.lg))];
+    if (!ids.length) return;
+    const d = new Date();
+    merge(await fetchRange(addDays(d, -1), addDays(d, 1), ids));
+  }
+  const sv = (arr, name) => { const x = (arr || []).find(s => s.name === name); return x ? parseFloat(x.displayValue != null ? x.displayValue : x.value) || 0 : 0; };
+  async function espnDetail(m) {
+    const j = await getJSON(`${ESPN}/${m.lg}/summary?event=${encodeURIComponent(m.id)}`);
+    const hid = m.h.i, out = { events: [], info: {}, lineup: {}, st: null };
+    for (const k of j.keyEvents || []) {
+      const tx = String((k.type && (k.type.text || k.type.type)) || '').toLowerCase();
+      const kind = (k.scoringPlay || /^(goal|own goal)/.test(tx)) ? 'g' : /yellow/.test(tx) ? 'y' : /red card/.test(tx) ? 'r' : /substitution/.test(tx) ? 's' : '';
+      if (!kind) continue;
+      const pa = k.participants || [], nm = i => pa[i] && pa[i].athlete && pa[i].athlete.displayName || '';
+      out.events.push({ k: kind, m: k.clock && k.clock.displayValue || '', t: String(k.team && k.team.id) === hid ? 'h' : 'a', p: nm(0), o: nm(1), q: /own goal/.test(tx) ? 'o' : /penalty/.test(tx) ? 'p' : '' });
+    }
+    const gi = j.gameInfo || {};
+    out.info = { venue: gi.venue && gi.venue.fullName, city: gi.venue && gi.venue.address && gi.venue.address.city, att: gi.attendance, ref: gi.officials && gi.officials[0] && gi.officials[0].fullName };
+    const bt = j.boxscore && j.boxscore.teams || [];
+    if (bt.length >= 2) {
+      const th = bt.find(t => String(t.team && t.team.id) === hid) || bt[0], ta = bt.find(t => t !== th) || bt[1];
+      const pair = n => [sv(th.statistics, n), sv(ta.statistics, n)];
+      const st = { p: pair('possessionPct'), sh: pair('totalShots'), ot: pair('shotsOnTarget'), co: pair('wonCorners'), fo: pair('foulsCommitted') };
+      if (Object.values(st).some(p => p[0] || p[1])) out.st = st;
+    }
+    for (const r of j.rosters || []) {
+      const side = (String(r.team && r.team.id) === hid || r.homeAway === 'home') ? 'h' : 'a';
+      const pl = (r.roster || []).map(p => ({ n: p.athlete && (p.athlete.shortName || p.athlete.displayName) || '', num: p.jersey || '', pos: p.position && p.position.abbreviation || '', fp: Number(p.formationPlace) || 0, starter: !!p.starter }));
+      const xi = pl.filter(p => p.starter).sort((a, b) => a.fp - b.fp);
+      if (!xi.length) continue;
+      const f = r.formation; out.lineup[side] = { form: typeof f === 'string' ? f : (f && (f.name || f.formationName)) || '', xi, bench: pl.filter(p => !p.starter) };
+    }
+    return out;
+  }
+  async function getDetail(m) {
+    try { return await espnDetail(m); }
+    catch (e) { try { return await api(`/api/match?id=${encodeURIComponent(m.id)}${isLive(m) ? '&live=1' : ''}`); } catch (_) { throw e; } }
+  }
+  async function espnTable(lg) {
+    const j = await getJSON(`${ESPN_V2}/${lg}/standings`);
+    const kids = j.children && j.children.length ? j.children : (j.standings ? [j] : []);
+    const groups = kids.map(ch => ({
+      name: ch.name || '', rows: ((ch.standings && ch.standings.entries) || []).map(en => {
+        const g = n => { const s = (en.stats || []).find(x => x.name === n); return s ? Number(s.value) || 0 : 0; };
+        const t = en.team || {};
+        return { i: String(t.id || ''), n: t.shortDisplayName || t.displayName || '', l: t.logos && t.logos[0] && t.logos[0].href || '', r: g('rank'), p: g('gamesPlayed'), w: g('wins'), d: g('ties'), lo: g('losses'), gd: g('pointDifferential'), pts: g('points') };
+      }).sort((a, b) => a.r - b.r)
+    })).filter(g => g.rows.length);
+    return { groups };
+  }
+  async function getTable(lg) {
+    try { return await espnTable(lg); }
+    catch (e) { try { return await api(`/api/table?lg=${encodeURIComponent(lg)}`); } catch (_) { throw e; } }
   }
   async function loadDetail(m, force) {
     const old = S.detail.get(m.id);
     const ttl = isLive(m) ? 25e3 : 300e3;
     if (!force && old && Date.now() - old.t < ttl) return;
-    try {
-      const d = await api(`/api/match?id=${encodeURIComponent(m.id)}${isLive(m) ? '&live=1' : ''}`);
-      S.detail.set(m.id, { t: Date.now(), d });
-    } catch (_) { S.detail.set(m.id, { t: Date.now(), d: null }); }
+    try { S.detail.set(m.id, { t: Date.now(), d: await getDetail(m) }); }
+    catch (_) { S.detail.set(m.id, { t: Date.now(), d: null }); }
     const cur = mainMatch();
     if (cur && cur.id === m.id) renderCentre();
   }
   async function loadTable(lg) {
     const old = S.table.get(lg);
     if (old && Date.now() - old.t < 600e3) return;
-    try { S.table.set(lg, { t: Date.now(), d: await api(`/api/table?lg=${encodeURIComponent(lg)}`) }); }
+    try { S.table.set(lg, { t: Date.now(), d: await getTable(lg) }); }
     catch (_) { S.table.set(lg, { t: Date.now(), d: null }); }
     renderSideTable();
     if (S.dtab === 'table') renderCentre();
@@ -90,7 +232,7 @@
     for (const p of pools) if (p.length) return p.sort(better)[0];
     return null;
   }
-  const mainMatch = () => (S.sel && S.matches.get(S.sel)) || pickBest(null);
+  const mainMatch = () => (S.sel && S.matches.get(S.sel)) || (S.pin && S.matches.get(S.pin)) || pickBest(null);
   const spotMatch = () => { const mm = mainMatch(); return pickBest(mm ? mm.lg : null); };
 
   /* ================= Asosiy panel ================= */
@@ -112,7 +254,7 @@
   }
   function renderMain() {
     const m = mainMatch(), el = $('featuredMatch');
-    if (!m) { el.innerHTML = '<div class="empty-state featured-empty"><strong>No major match right now</strong><span>Check the fixtures below for the next big game.</span></div>'; $('centre').hidden = true; return; }
+    if (!m) { el.innerHTML = S.err ? `<div class="empty-state featured-empty"><strong>Live data is temporarily unavailable</strong><span>${esc(S.err)} — retrying automatically.</span></div>` : '<div class="empty-state featured-empty"><strong>No major match right now</strong><span>Check the fixtures below for the next big game.</span></div>'; $('centre').hidden = true; return; }
     const li = lgInfo(m.lg), h = m.h, a = m.a;
     const score = (m.s === 'pre' || m.s === 'pp') ? `<span>${esc(fmtTime(m.d))}</span>` : `<span>${h.g} – ${a.g}</span>`;
     const venue = [m.v, m.ct].filter(Boolean).join(' · ');
@@ -120,12 +262,12 @@
     el.innerHTML = `<div class="featured-league"><span class="league-badge-box">${esc(li.n)}${m.nt ? ' · ' + esc(String(m.nt).toUpperCase()) : ''}</span></div>
       <div class="hero-placeholder">
         <div class="placeholder-team">${h.l ? `<img class="team-logo" src="${esc(h.l)}" alt="${esc(h.n)} logo">` : '<div class="placeholder-crest">⚽</div>'}<div class="placeholder-team-name">${esc(h.n)}</div>${scorers(m, 'h')}</div>
-        <div class="placeholder-score">${score}<div class="status-line">${badge(m)}</div><small>${esc(new Date(m.d).toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' }))} · ${esc(fmtTime(m.d))}</small></div>
+        <div class="placeholder-score">${score}<div class="status-line">${badge(m)}</div><small>${esc(fmtDay(m.d))} · ${esc(fmtTime(m.d))}</small></div>
         <div class="placeholder-team">${a.l ? `<img class="team-logo" src="${esc(a.l)}" alt="${esc(a.n)} logo">` : '<div class="placeholder-crest">⚽</div>'}<div class="placeholder-team-name">${esc(a.n)}</div>${scorers(m, 'a')}</div>
       </div>
       ${venue ? `<div class="featured-venue">🏟 ${esc(venue)}</div>` : ''}
-      <div class="slot-actions"><button type="button" id="copyLink">🔗 Copy match link</button>${mine ? '<button type="button" id="resetMain">↺ Back to biggest match</button>' : ''}${ADMIN && !STREAM ? `<a class="admin-chip" href="${esc(CFG.controlUrl || '#')}" target="_blank" rel="noopener">🎛 Stream control</a>` : ''}</div>`;
-    $('mainHint').textContent = mine ? 'YOUR SELECTED MATCH' : 'BIGGEST MATCH RIGHT NOW';
+      <div class="slot-actions"><button type="button" id="copyLink">🔗 Copy match link</button>${mine ? '<button type="button" id="resetMain">↺ Back to biggest match</button>' : ''}</div>`;
+    $('mainHint').textContent = mine ? 'YOUR SELECTED MATCH' : (S.pin && S.matches.has(S.pin) ? 'FEATURED MATCH' : 'BIGGEST MATCH RIGHT NOW');
     $('copyLink').onclick = () => { const u = `${location.origin}${location.pathname}?m=${encodeURIComponent(m.id)}`; (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(() => { $('copyLink').textContent = '✓ Copied'; }).catch(() => prompt('Copy this link:', u)); };
     if ($('resetMain')) $('resetMain').onclick = () => { S.sel = null; renderAll(); };
     $('centre').hidden = false;
@@ -153,13 +295,14 @@
     if (!evs.length) return `<div class="empty-state">${m.s === 'pre' ? 'The match has not started yet.' : 'No key events recorded yet.'}</div>`;
     const rows = evs.map(e => `<div class="tl-row"><div class="tl-h">${e.t === 'h' ? evHTML(e) : ''}</div><div class="tl-m">${esc(fm(e.m))}</div><div class="tl-a">${e.t === 'a' ? evHTML(e) : ''}</div></div>`).join('');
     const i = d && d.info ? d.info : {};
-    const info = [i.venue || m.v, i.city || m.ct, i.att ? 'Attendance ' + Number(i.att).toLocaleString() : '', i.ref ? 'Referee ' + i.ref : ''].filter(Boolean).join(' · ');
+    const info = [i.venue || m.v, i.city || m.ct, i.att ? 'Attendance ' + Number(i.att).toLocaleString('en-US') : '', i.ref ? 'Referee ' + i.ref : ''].filter(Boolean).join(' · ');
     return rows + (info ? `<div class="info-line">${esc(info)}</div>` : '');
   }
-  function statsHTML(m) {
-    if (!m.st) return '<div class="empty-state">Statistics appear when the match starts.</div>';
+  function statsHTML(m, d) {
+    const ST = m.st || (d && d.st);
+    if (!ST) return '<div class="empty-state">Statistics appear when the match starts.</div>';
     const N = [['p', 'Possession', v => Math.round(v) + '%'], ['sh', 'Shots', v => v], ['ot', 'Shots on target', v => v], ['co', 'Corners', v => v], ['fo', 'Fouls', v => v]];
-    return N.map(([k, n, f]) => { const [a, b] = m.st[k] || [0, 0], t = (a + b) || 1; return `<div class="sbar"><div class="l"><b>${f(a)}</b><span>${n}</span><b>${f(b)}</b></div><div class="b"><i style="width:${a || b ? a / t * 100 : 50}%"></i></div></div>`; }).join('');
+    return N.map(([k, n, f]) => { const [a, b] = ST[k] || [0, 0], t = (a + b) || 1; return `<div class="sbar"><div class="l"><b>${f(a)}</b><span>${n}</span><b>${f(b)}</b></div><div class="b"><i style="width:${a || b ? a / t * 100 : 50}%"></i></div></div>`; }).join('');
   }
   const W = n => n >= 4 ? 72 : n === 3 ? 64 : 40;
   function place(xi, form) {
@@ -206,7 +349,7 @@
   function videoHTML(m) {
     if (STREAM) return '<div class="empty-state">Video is disabled in stream mode.</div>';   // stream paytida video HECH QACHON yuklanmaydi
     if (S.videos === null) { fetch('videos.json', { cache: 'no-cache' }).then(r => r.json()).catch(() => ({})).then(j => { S.videos = j || {}; if (S.dtab === 'video') renderCentre(); }); return '<div class="empty-state">Loading…</div>'; }
-    const id = ytId(S.videos[m.id]);
+    const id = ytId(S.localVideos[m.id] || S.videos[m.id]);
     if (!id) return '<div class="empty-state">No video is available for this match yet.</div>';
     return `<iframe class="vid" src="https://www.youtube-nocookie.com/embed/${id}?rel=0" title="Match video" loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
   }
@@ -214,7 +357,7 @@
     const m = mainMatch(); if (!m) return;
     renderCentreTabs();
     const rec = S.detail.get(m.id), d = rec && rec.d;
-    const body = { timeline: () => tlHTML(m, d), stats: () => statsHTML(m), lineups: () => lineupHTML(m, d), table: () => tableHTML(m, 0), video: () => videoHTML(m) }[S.dtab];
+    const body = { timeline: () => tlHTML(m, d), stats: () => statsHTML(m, d), lineups: () => lineupHTML(m, d), table: () => tableHTML(m, 0), video: () => videoHTML(m) }[S.dtab];
     $('centreBody').innerHTML = body ? body() : '';
     if (!rec) loadDetail(m);
   }
@@ -248,7 +391,7 @@
   /* ================= Ro'yxatlar (takrorsiz, ligalar bo'yicha guruhlangan) ================= */
   function days() {
     const now = new Date(), out = [];
-    for (let i = -1; i <= (Number(CFG.daysAhead) || 6); i++) {
+    for (let i = -1; i <= DAYS(); i++) {
       const d = addDays(now, i);
       out.push({ key: dkey(d), label: i === -1 ? 'Yesterday' : i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : fmtDay(d) });
     }
@@ -292,7 +435,7 @@
     if (S.lg !== 'all') list = list.filter(m => m.lg === S.lg);
     $('matchCount').textContent = `${list.length} MATCH${list.length === 1 ? '' : 'ES'}`;
     if (!list.length) {
-      $('matchList').innerHTML = `<div class="empty-state">${S.q.length >= 2 ? 'No matches found for your search.' : S.tab === 'live' ? 'No live matches right now. Pick a day above to see fixtures.' : 'No matches in the tracked competitions on this day.'}</div>`;
+      $('matchList').innerHTML = `<div class="empty-state">${S.err && !S.matches.size ? 'Could not load matches: ' + esc(S.err) : S.q.length >= 2 ? 'No matches found for your search.' : S.tab === 'live' ? 'No live matches right now. Pick a day above to see fixtures.' : 'No matches in the tracked competitions on this day.'}</div>`;
       return;
     }
     const groups = new Map();
@@ -309,8 +452,8 @@
 
   /* ================= Chizish va hodisalar ================= */
   function renderFresh() {
-    const t = S.gen ? new Date(S.gen).toLocaleTimeString() : '';
-    $('dataFreshness').textContent = t ? `Updated ${t} · refreshes automatically` : 'Connecting to live match data…';
+    const t = S.gen ? new Date(S.gen).toLocaleTimeString('en-GB') : '';
+    $('dataFreshness').textContent = S.err && !S.gen ? 'Live data is temporarily unavailable. Retrying…' : t ? `Updated ${t} · refreshes automatically` : 'Connecting to live match data…';
   }
   function renderAll() { renderMain(); renderCentre(); renderSpot(); renderSideTable(); renderComp(); renderLists(); renderFresh(); }
 
@@ -358,9 +501,7 @@
       const want = Q.get('m');
       if (want && S.matches.has(want)) S.sel = want;
     } catch (err) {
-      $('dataFreshness').textContent = 'Live data is temporarily unavailable. Retrying…';
-      $('featuredMatch').innerHTML = '<div class="empty-state featured-empty"><strong>Live data is temporarily unavailable</strong><span>We are retrying automatically.</span></div>';
-      $('matchList').innerHTML = '<div class="empty-state">Could not load matches. Please try again in a moment.</div>';
+      S.err = (err && err.message) || String(err);
     }
     renderAll();
     schedule();
@@ -374,11 +515,12 @@
   async function tick() {
     if (document.visibilityState === 'visible') {
       try {
-        if (S.matches.size) await pollLive(); else await loadWeek();
+        if (!S.matches.size || Date.now() - lastFull > 10 * 60e3) await loadWeek(); else await pollLive();
+        S.err = '';
         const m = mainMatch();
-        renderMain(); renderSpot(); renderLists(); renderFresh(); renderComp();
+        renderMain(); renderSpot(); renderLists(); renderFresh(); renderComp(); renderAdmin();
         if (m && isLive(m)) loadDetail(m, true); else renderCentre();
-      } catch (_) {}
+      } catch (e) { S.err = (e && e.message) || String(e); renderAll(); }
     }
     schedule();
   }
@@ -460,5 +602,67 @@
   $('privacySettingsLink').addEventListener('click', e => { e.preventDefault(); openCookieSettings(); });
   showCookieBanner();
 
+  /* ================= Control panel (open the site once with ?admin=1) ================= */
+  function buildAdmin() {
+    if (!ADMIN || STREAM) return;
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'ctl-fab'; btn.textContent = '🎛 CONTROL';
+    const panel = document.createElement('aside');
+    panel.id = 'ctlPanel'; panel.className = 'ctl-panel'; panel.hidden = true;
+    document.body.append(btn, panel);
+    btn.onclick = () => { panel.hidden = !panel.hidden; if (!panel.hidden) renderAdmin(); };
+    panel.addEventListener('click', async e => {
+      const t = e.target.closest('[data-act]'); if (!t) return;
+      const act = t.dataset.act;
+      if (act === 'close') panel.hidden = true;
+      else if (act === 'reload') { t.textContent = 'Loading…'; await reloadAll(); renderAdmin(); }
+      else if (act === 'pin') { const v = $('ctlPin').value; if (v) { S.pin = v; store.set('lf_pin', v); } else { S.pin = null; store.del('lf_pin'); } S.sel = null; renderAll(); renderAdmin(); }
+      else if (act === 'copyurl') { const u = `${location.origin}${location.pathname}?stream=1${S.pin ? '&m=' + encodeURIComponent(S.pin) : ''}`; try { await navigator.clipboard.writeText(u); t.textContent = '✓ Copied'; } catch (_) { prompt('Stream URL:', u); } }
+      else if (act === 'all' || act === 'none') panel.querySelectorAll('[data-lgchk]').forEach(c => { c.checked = act === 'all'; });
+      else if (act === 'saveleagues') {
+        const ids = [...panel.querySelectorAll('[data-lgchk]')].filter(c => c.checked).map(c => c.dataset.lgchk);
+        if (!ids.length) { alert('Select at least one competition.'); return; }
+        store.set('lf_leagues', ids); store.set('lf_days', Math.min(14, Math.max(1, Number($('ctlDays').value) || 6)));
+        t.textContent = 'Loading…'; S.tab = null; await reloadAll(); renderAdmin();
+      }
+      else if (act === 'savevideo') {
+        const m = mainMatch(); if (!m) return; const v = $('ctlVideo').value.trim();
+        if (v && !ytId(v)) { alert('That does not look like a YouTube link.'); return; }
+        if (v) S.localVideos[m.id] = v; else delete S.localVideos[m.id];
+        store.set('lf_videos', S.localVideos); renderCentre(); renderAdmin();
+      }
+      else if (act === 'exportvideos') { const j = JSON.stringify(Object.assign({}, S.videos || {}, S.localVideos), null, 2); try { await navigator.clipboard.writeText(j); t.textContent = '✓ Copied — paste into videos.json'; } catch (_) { prompt('videos.json:', j); } }
+      else if (act === 'exit') { store.del('lf_admin'); try { localStorage.removeItem('lf_admin'); } catch (_) {} location.href = location.pathname; }
+    });
+  }
+  async function reloadAll() {
+    try { await loadWeek(); } catch (e) { S.err = e.message || String(e); }
+    renderAll();
+  }
+  function renderAdmin() {
+    const panel = $('ctlPanel'); if (!panel || panel.hidden) return;
+    const en = new Set(enabledLeagues()), ms = [...S.matches.values()].sort((a, b) => T(a) - T(b)), cur = mainMatch();
+    const diag = Object.keys(LEAGUES).filter(k => en.has(k)).map(k => { const d = S.diag[k]; return `<tr><td>${esc(LEAGUES[k].n)}</td><td class="${d ? (d.ok ? 'ok' : 'bad') : ''}">${d ? (d.ok ? d.n + ' matches' : 'FAILED') : '—'}</td></tr>`; }).join('');
+    const firstErr = Object.values(S.diag).find(d => !d.ok);
+    panel.innerHTML = `<div class="ctl-head"><b>🎛 STREAM / SITE CONTROL</b><button type="button" data-act="close" aria-label="Close">×</button></div>
+      <div class="ctl-sec"><h4>Data source</h4>
+        <p>ESPN public API · ${S.matches.size} matches · ${S.gen ? 'updated ' + esc(new Date(S.gen).toLocaleTimeString('en-GB')) : 'not loaded'}</p>
+        ${S.err ? `<p class="bad">⚠ ${esc(S.err)}</p>` : ''}${firstErr ? `<p class="bad">Last league error: ${esc(firstErr.err || '')}</p>` : ''}
+        <button type="button" data-act="reload">↻ Reload all data now</button>
+        <details><summary>Diagnostics per competition</summary><table class="ctl-tbl">${diag}</table></details></div>
+      <div class="ctl-sec"><h4>Main scoreboard</h4>
+        <select id="ctlPin"><option value="">Auto — biggest match</option>${ms.map(m => `<option value="${esc(m.id)}"${S.pin === m.id ? ' selected' : ''}>${esc(m.h.n)} v ${esc(m.a.n)} · ${esc(fmtDay(m.d))} ${esc(fmtTime(m.d))} · ${esc(lgInfo(m.lg).n)}</option>`).join('')}</select>
+        <div class="ctl-row"><button type="button" data-act="pin">📌 Apply</button><button type="button" data-act="copyurl">🔗 Copy stream URL</button><a href="?stream=1${S.pin ? '&m=' + encodeURIComponent(S.pin) : ''}" target="_blank" rel="noopener">▶ Open stream mode</a></div></div>
+      <div class="ctl-sec"><h4>Competitions &amp; days</h4>
+        <div class="ctl-row"><button type="button" data-act="all">All</button><button type="button" data-act="none">None</button><label>Days ahead <input id="ctlDays" type="number" min="1" max="14" value="${DAYS()}"></label></div>
+        <div class="ctl-grid">${Object.keys(LEAGUES).map(k => `<label><input type="checkbox" data-lgchk="${esc(k)}"${en.has(k) ? ' checked' : ''}> ${esc(LEAGUES[k].n)}</label>`).join('')}</div>
+        <button type="button" data-act="saveleagues">💾 Save &amp; reload</button></div>
+      <div class="ctl-sec"><h4>Video for current main match${cur ? ': ' + esc(cur.h.n) + ' v ' + esc(cur.a.n) : ''}</h4>
+        <input id="ctlVideo" type="url" placeholder="https://youtu.be/…" value="${cur ? esc(S.localVideos[cur.id] || (S.videos && S.videos[cur.id]) || '') : ''}">
+        <div class="ctl-row"><button type="button" data-act="savevideo">Save</button><button type="button" data-act="exportvideos">Copy videos.json</button></div></div>
+      <div class="ctl-sec ctl-foot">${CFG.controlUrl ? `<a href="${esc(CFG.controlUrl)}" target="_blank" rel="noopener">🖥 Open PC stream control</a>` : ''}<button type="button" data-act="exit">Exit admin mode</button></div>`;
+  }
+
+  buildAdmin();
   start();
 })();
