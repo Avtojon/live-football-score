@@ -58,7 +58,7 @@
   let lastFull = 0;
 
   /* ================= Holat ================= */
-  const S = { matches: new Map(), leagues: Object.assign({}, LEAGUES), diag: {}, err: '', pin: store.get('lf_pin', null), localVideos: store.get('lf_videos', {}), sel: null, tab: null, lg: 'all', q: '', dtab: 'timeline', detail: new Map(), table: new Map(), open: new Set(), gen: null, videos: null, userTab: false };
+  const S = { matches: new Map(), leagues: Object.assign({}, LEAGUES), diag: {}, err: '', pin: store.get('lf_pin', null), localVideos: store.get('lf_videos', {}), sel: null, tab: null, lg: 'all', q: '', dtab: 'timeline', detail: new Map(), table: new Map(), open: new Set(), gen: null, videos: null, userTab: false, source: 'ESPN' };
 
   /* ================= Yordamchilar ================= */
   const T = m => Date.parse(m.d) || 0;
@@ -73,7 +73,7 @@
   const lgInfo = id => S.leagues[id] || { n: id, c: '', w: 20 };
   const crest = (t, cls) => t && t.l ? `<img class="${cls}" src="${esc(t.l)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">` : '<span class="mini-crest">⚽</span>';
 
-  /* ================= ESPN data layer (browser -> ESPN public JSON) ================= */
+  /* ================= ESPN data layer (browser -> ESPN public JSON + Worker fallback) ================= */
   const ESPN = 'https://site.api.espn.com/apis/site/v2/sports/soccer';
   const ESPN_V2 = 'https://site.api.espn.com/apis/v2/sports/soccer';
   const BIG = new Set(['real madrid', 'barcelona', 'manchester city', 'manchester united', 'liverpool', 'arsenal', 'chelsea', 'tottenham hotspur', 'bayern munich', 'paris saint-germain', 'juventus', 'inter milan', 'ac milan', 'atlético madrid', 'atletico madrid', 'borussia dortmund', 'napoli']);
@@ -83,7 +83,7 @@
     if (!r.ok) throw new Error('HTTP ' + r.status);
     return r.json();
   }
-  async function api(path) {                         // optional fallback: old Cloudflare Worker
+  async function api(path) {                         // optional fallback: Cloudflare Worker
     if (!API) throw new Error('No fallback API configured');
     const r = await fetch(API + path, { cache: 'no-store' });
     if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -117,40 +117,109 @@
       pr: li.w * 10 + bonus, h: teamObj(H, H.score), a: teamObj(A, A.score), e
     };
   }
-  async function espnRange(from, to, ids) {
+
+  /* ESPN endi dates=YYYYMMDD-YYYYMMDD oraliq so'rovini qabul qilmaydi (HTTP 400).
+     Har bir kun (?dates=YYYYMMDD) alohida so'raladi va natijalar birlashtiriladi. */
+  async function espnDay(dayStr, ids) {
     ids = ids || enabledLeagues();
-    const res = await Promise.allSettled(ids.map(lg => getJSON(`${ESPN}/${lg}/scoreboard?dates=${ymd(from)}-${ymd(to)}&limit=500`)));
+    const res = await Promise.allSettled(ids.map(lg => getJSON(`${ESPN}/${lg}/scoreboard?dates=${dayStr}`)));
     const matches = [];
+    let okCount = 0, lastErr = '';
     res.forEach((r, i) => {
       const lg = ids[i];
       if (r.status === 'fulfilled') {
+        okCount++;
         const evs = (r.value.events || []).map(ev => mapEvent(ev, lg)).filter(Boolean);
-        matches.push(...evs); S.diag[lg] = { ok: true, n: evs.length, t: Date.now() };
-      } else S.diag[lg] = { ok: false, err: String(r.reason && r.reason.message || r.reason), t: Date.now() };
+        matches.push(...evs);
+        const prev = S.diag[lg] && S.diag[lg].ok ? S.diag[lg].n : 0;
+        S.diag[lg] = { ok: true, n: prev + evs.length, t: Date.now() };
+      } else {
+        lastErr = String(r.reason && r.reason.message || r.reason);
+        if (!S.diag[lg]) S.diag[lg] = { ok: false, err: lastErr, t: Date.now() };
+      }
     });
-    if (!res.some(r => r.status === 'fulfilled')) throw new Error('ESPN is unreachable from this browser (' + (S.diag[ids[0]] && S.diag[ids[0]].err || 'network') + ')');
+    if (!okCount) throw new Error('ESPN unreachable (' + (lastErr || 'network') + ')');
+    S.source = 'ESPN Direct';
     return { matches, leagues: LEAGUES, generatedAt: new Date().toISOString() };
   }
-  async function fetchRange(from, to, ids) {
-    try { return await espnRange(from, to, ids); }
-    catch (e) { try { return await api(`/api/matches?from=${ymd(from)}&to=${ymd(to)}`); } catch (_) { throw e; } }
+
+  async function fetchDay(dayStr, ids) {
+    try {
+      return await espnDay(dayStr, ids);
+    } catch (e) {
+      try {
+        const q = `/api/matches?days=${encodeURIComponent(dayStr)}${ids ? '&leagues=' + encodeURIComponent(ids.join(',')) : ''}`;
+        const j = await api(q);
+        if (Array.isArray(j.matches)) {
+          S.source = 'Cloudflare Worker';
+          return j;
+        }
+      } catch (_) {}
+      throw e;
+    }
   }
+
+  function refreshDiagCounts(ids) {
+    const counts = {};
+    for (const m of S.matches.values()) counts[m.lg] = (counts[m.lg] || 0) + 1;
+    for (const lg of (ids || enabledLeagues())) {
+      if (S.diag[lg] && S.diag[lg].ok) S.diag[lg].n = counts[lg] || 0;
+    }
+  }
+
   function merge(js) {
     Object.assign(S.leagues, js.leagues || {});
     for (const m of js.matches || []) S.matches.set(m.id, m);
     S.gen = js.generatedAt || S.gen;
   }
+
+  let loadSeq = 0;
   async function loadWeek() {
-    const now = new Date();
-    const js = await fetchRange(addDays(now, -2), addDays(now, DAYS() + 1));
-    S.matches.clear(); merge(js); S.err = ''; lastFull = Date.now();
+    const seq = ++loadSeq;
+    const now = new Date(), ids = enabledLeagues();
+    S.diag = {};
+    /* 1-bosqich: Kecha va Bugun — sahifa <1 soniyada ochilishi uchun darhol yuklanadi */
+    const firstDays = [ymd(addDays(now, -1)), ymd(now)];
+    const firstRes = await Promise.allSettled(firstDays.map(d => fetchDay(d, ids)));
+    if (seq !== loadSeq) return;
+    const okFirst = firstRes.filter(r => r.status === 'fulfilled');
+    if (!okFirst.length) {
+      const reason = firstRes[0] && firstRes[0].reason;
+      throw reason || new Error('Could not load match data');
+    }
+    S.matches.clear();
+    okFirst.forEach(r => merge(r.value));
+    refreshDiagCounts(ids);
+    S.err = '';
+    lastFull = Date.now();
+    renderAll();
+
+    /* 2-bosqich: Ertaga va keyingi kunlar (fon rejimida 2 kundan yuklanadi) */
+    const restDays = [];
+    for (let i = 1; i <= DAYS(); i++) restDays.push(ymd(addDays(now, i)));
+    for (let i = 0; i < restDays.length; i += 2) {
+      if (seq !== loadSeq) return;
+      const batch = restDays.slice(i, i + 2);
+      const res = await Promise.allSettled(batch.map(d => fetchDay(d, ids)));
+      if (seq !== loadSeq) return;
+      let added = false;
+      res.forEach(r => { if (r.status === 'fulfilled') { merge(r.value); added = true; } });
+      if (added) {
+        refreshDiagCounts(ids);
+        renderMain(); renderSpot(); renderComp(); renderLists(); renderFresh(); renderAdmin();
+      }
+    }
   }
+
   async function pollLive() {
     const now = Date.now(), ids = [...new Set([...S.matches.values()].filter(m => isLive(m) || Math.abs(T(m) - now) < 4 * HOUR).map(m => m.lg))];
     if (!ids.length) return;
     const d = new Date();
-    merge(await fetchRange(addDays(d, -1), addDays(d, 1), ids));
+    const res = await Promise.allSettled([ymd(addDays(d, -1)), ymd(d)].map(day => fetchDay(day, ids)));
+    res.forEach(r => { if (r.status === 'fulfilled') merge(r.value); });
+    refreshDiagCounts();
   }
+
   const sv = (arr, name) => { const x = (arr || []).find(s => s.name === name); return x ? parseFloat(x.displayValue != null ? x.displayValue : x.value) || 0 : 0; };
   async function espnDetail(m) {
     const j = await getJSON(`${ESPN}/${m.lg}/summary?event=${encodeURIComponent(m.id)}`);
@@ -182,7 +251,7 @@
   }
   async function getDetail(m) {
     try { return await espnDetail(m); }
-    catch (e) { try { return await api(`/api/match?id=${encodeURIComponent(m.id)}${isLive(m) ? '&live=1' : ''}`); } catch (_) { throw e; } }
+    catch (e) { try { return await api(`/api/match?lg=${encodeURIComponent(m.lg)}&id=${encodeURIComponent(m.id)}${isLive(m) ? '&live=1' : ''}`); } catch (_) { throw e; } }
   }
   async function espnTable(lg) {
     const j = await getJSON(`${ESPN_V2}/${lg}/standings`);
@@ -285,7 +354,6 @@
     return txt;
   }
   function tlHTML(m, d) {
-    // ikkala manba birlashtiriladi: scoreboard (gol/kartochka) + summary (almashtirish ham); takrorlar olib tashlanadi
     const seen = new Set(), evs = [];
     for (const e of [].concat(d && d.events || [], m.e || [])) {
       const key = e.k === 's' ? `s|${e.p}|${e.o}` : `${e.k}|${minNum(e.m)}|${e.t}`;
@@ -347,7 +415,7 @@
     return m ? m[1] : '';
   }
   function videoHTML(m) {
-    if (STREAM) return '<div class="empty-state">Video is disabled in stream mode.</div>';   // stream paytida video HECH QACHON yuklanmaydi
+    if (STREAM) return '<div class="empty-state">Video is disabled in stream mode.</div>';
     if (S.videos === null) { fetch('videos.json', { cache: 'no-cache' }).then(r => r.json()).catch(() => ({})).then(j => { S.videos = j || {}; if (S.dtab === 'video') renderCentre(); }); return '<div class="empty-state">Loading…</div>'; }
     const id = ytId(S.localVideos[m.id] || S.videos[m.id]);
     if (!id) return '<div class="empty-state">No video is available for this match yet.</div>';
@@ -416,7 +484,7 @@
   }
   function renderLists() {
     const days_ = days();
-    if (!S.tab) {                                  // birinchi ochilish: jonli bor bo'lsa "Live Now", aks holda "Today"
+    if (!S.tab) {
       const anyLive = [...S.matches.values()].some(isLive);
       S.tab = anyLive ? 'live' : days_.find(d => d.label === 'Today').key;
     }
@@ -426,7 +494,6 @@
     $('viewTabs').innerHTML = `<button type="button" class="filter${S.tab === 'live' && S.q.length < 2 ? ' active' : ''}" data-tab="live">Live Now<span class="cnt">${liveCount}</span></button>` +
       days_.map(d => `<button type="button" class="filter${S.tab === d.key && S.q.length < 2 ? ' active' : ''}" data-tab="${d.key}">${esc(d.label)}<span class="cnt">${cnt(d.key)}</span></button>`).join('');
     let list = viewList();
-    // liga filtri tugmalari: shu ko'rinishdagi ligalar
     const lgCount = {};
     list.forEach(m => lgCount[m.lg] = (lgCount[m.lg] || 0) + 1);
     const lgIds = Object.keys(lgCount).sort((a, b) => lgInfo(b).w - lgInfo(a).w);
@@ -455,7 +522,7 @@
     const t = S.gen ? new Date(S.gen).toLocaleTimeString('en-GB') : '';
     $('dataFreshness').textContent = S.err && !S.gen ? 'Live data is temporarily unavailable. Retrying…' : t ? `Updated ${t} · refreshes automatically` : 'Connecting to live match data…';
   }
-  function renderAll() { renderMain(); renderCentre(); renderSpot(); renderSideTable(); renderComp(); renderLists(); renderFresh(); }
+  function renderAll() { renderMain(); renderCentre(); renderSpot(); renderSideTable(); renderComp(); renderLists(); renderFresh(); renderAdmin(); }
 
   function select(id) {
     if (!S.matches.has(id)) return;
@@ -526,7 +593,7 @@
   }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { clearTimeout(timer); tick(); } });
 
-  /* ================= Cookie va rozilik (avvalgi sayt mantig'i saqlangan) ================= */
+  /* ================= Cookie va rozilik ================= */
   const consentKey = 'liveFootball.cookieConsent.v1';
   function startOptionalTools(choice) {
     const cfg = window.LIVE_FOOTBALL_CONFIG || {};
@@ -646,8 +713,8 @@
     const firstErr = Object.values(S.diag).find(d => !d.ok);
     panel.innerHTML = `<div class="ctl-head"><b>🎛 STREAM / SITE CONTROL</b><button type="button" data-act="close" aria-label="Close">×</button></div>
       <div class="ctl-sec"><h4>Data source</h4>
-        <p>ESPN public API · ${S.matches.size} matches · ${S.gen ? 'updated ' + esc(new Date(S.gen).toLocaleTimeString('en-GB')) : 'not loaded'}</p>
-        ${S.err ? `<p class="bad">⚠ ${esc(S.err)}</p>` : ''}${firstErr ? `<p class="bad">Last league error: ${esc(firstErr.err || '')}</p>` : ''}
+        <p>${esc(S.source)} · ${S.matches.size} matches · ${S.gen ? 'updated ' + esc(new Date(S.gen).toLocaleTimeString('en-GB')) : 'not loaded'}</p>
+        ${S.err ? `<p class="bad">⚠ ${esc(S.err)}</p>` : '<p class="ok">✓ Connected &amp; active</p>'}${firstErr ? `<p class="bad">Last league error: ${esc(firstErr.err || '')}</p>` : ''}
         <button type="button" data-act="reload">↻ Reload all data now</button>
         <details><summary>Diagnostics per competition</summary><table class="ctl-tbl">${diag}</table></details></div>
       <div class="ctl-sec"><h4>Main scoreboard</h4>
