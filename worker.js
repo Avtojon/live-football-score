@@ -92,7 +92,11 @@ function normMatch(lg, ev) {
   else if (/HALFTIME/.test(name)) s = 'ht';
   else if (ty.state === 'in') s = 'in';
   else if (ty.state === 'post') s = 'post';
-  const team = c => { const t = c.team || {}; return { i: String(t.id || ''), n: String(t.shortDisplayName || t.name || '?').slice(0, 40), f: String(t.displayName || t.name || '').slice(0, 60), l: safeImg(t.logo), k: hex(t.color), g: s === 'pre' || s === 'pp' ? null : (parseInt(c.score, 10) || 0) }; };
+  const team = c => {
+    const t = c.team || {};
+    const logoUrl = t.logo || (t.logos && t.logos[0] && t.logos[0].href) || '';
+    return { i: String(t.id || ''), n: String(t.shortDisplayName || t.name || '?').slice(0, 40), f: String(t.displayName || t.name || '').slice(0, 60), l: safeImg(logoUrl), k: hex(t.color), g: s === 'pre' || s === 'pp' ? null : (parseInt(c.score, 10) || 0) };
+  };
   const e = [];
   for (const d of comp.details || []) {
     const k = d.redCard ? 'r' : d.yellowCard ? 'y' : d.scoringPlay ? 'g' : '';
@@ -201,8 +205,16 @@ const validMatchId = id => /^[a-z0-9.]{2,30}:\d{1,12}$/.test(String(id || ''));
 
 /* ---------- HTTP ---------- */
 const ORIGIN_LOCAL = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+function normOrigin(s) {
+  s = String(s || '').trim().replace(/^['"]+|['"]+$/g, '');
+  if (!s || s === '*') return s;
+  try { return new URL(s).origin; } catch (_) { return s.replace(/\/+$/, ''); }
+}
+function allowedList(env) {
+  return String((env && env.ALLOWED_ORIGIN) || '*').split(',').map(normOrigin).filter(Boolean);
+}
 function corsHeaders(origin, env) {
-  const list = String((env && env.ALLOWED_ORIGIN) || '*').split(',').map(x => x.trim()).filter(Boolean);
+  const list = allowedList(env);
   const any = list.includes('*');
   const ok = any || list.includes(origin) || ORIGIN_LOCAL.test(origin);
   return { 'Access-Control-Allow-Origin': ok ? (any ? '*' : origin) : 'null', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type, Accept, X-Admin-Token', 'Access-Control-Max-Age': '86400', 'Vary': 'Origin' };
@@ -244,15 +256,25 @@ export default {
     const isNotePost = request.method === 'POST' && /^\/api\/note(\/(del|clear))?$/.test(url.pathname);
     if (request.method !== 'GET' && !isNotePost) return json({ ok: false, message: 'Method not allowed.' }, 405, cors);
     if (request.url.length > 600) return json({ ok: false, message: 'URL too long.' }, 414, cors);
-    const list = String((env && env.ALLOWED_ORIGIN) || '*').split(',').map(x => x.trim()).filter(Boolean);
+    const list = allowedList(env);
     if (!list.includes('*') && origin && !list.includes(origin) && !ORIGIN_LOCAL.test(origin)) return json({ ok: false, message: 'Origin not allowed.' }, 403, cors);
 
     try {
-      if (url.pathname === '/api/health') return json({ ok: true, service: 'LIVE FOOTBALL ESPN proxy', version: 3, leagues: LEAGUES.map(l => ({ id: l[0], n: l[1], c: l[2], w: l[3] })), lastStatus: health }, 200, cors);
+      if (url.pathname === '/' || url.pathname === '/api/health') {
+        return json({
+          ok: true,
+          service: 'LIVE FOOTBALL ESPN proxy',
+          version: 3,
+          endpoints: ['/api/health', '/api/matches?days=YYYYMMDD', '/api/match?id=LEAGUE:ID', '/api/table?lg=LEAGUE', '/api/notes?id=LEAGUE:ID'],
+          leagues: LEAGUES.map(l => ({ id: l[0], n: l[1], c: l[2], w: l[3] })),
+          lastStatus: health
+        }, 200, cors);
+      }
 
       /* /api/matches?days=YYYYMMDD  — BITTA kun (Cloudflare bepul tarifi: bir chaqiruvda ≤ 50 ichki so'rov; liga soni ≈ 30) */
-      if (url.pathname === '/api/matches') {
-        const days = String(q.get('days') || '').split(',').filter(Boolean);
+      if (url.pathname === '/api/matches' || url.pathname === '/api/fixtures') {
+        const rawDays = String(q.get('days') || '').split(',').map(x => x.trim()).filter(Boolean);
+        const days = rawDays.length ? rawDays : [utcDay()];
         const today = dayNum(utcDay());
         if (!days.length || days.length > 1 || !days.every(validDay) || days.some(d => dayNum(d) - today > MAX_AHEAD || today - dayNum(d) > MAX_BACK))
           return json({ ok: false, message: 'Use ?days=YYYYMMDD (one UTC day, from ' + MAX_BACK + ' days ago to ' + MAX_AHEAD + ' days ahead).' }, 400, cors);
