@@ -1,205 +1,526 @@
+Чат с Gemini
 
-:root{--bg:#030a12;--panel:#091725;--panel2:#0d1d2c;--line:#20364a;--muted:#9db0c2;--white:#f7faff;--green:#2df58a;--red:#ff3048;--blue:#159cff}
+fayllarni tahlil qil. Hato beryapdi. API-footbaldan olinmaydi ma'lumotlar. ESPN'dan olinadi.
+
+Hozir mana bu: "{"ok":true,"service":"LIVE FOOTBALL API proxy","configured":true,"cacheMinutes":20,"eventsDailyBudget":15,"dataScope":"yesterday, today, and tomorrow (UTC); client displays local-day fixtures"}" hatoni beryapdi.
+
+
+Tahlil qilib hatoolarni tuzatib bergin, do'stim
+
+Barcha fayllarni tekshirib chiqdim va worker.js hamda lf-core.js fayllaridagi kamchiliklarni tuzatib tayyorlab qo'ydim.
+Lf Core
+9 нояб., 16:34
+Worker
+9 нояб., 16:34
+Muammo nimada?
+
+Siz ko'rayotgan javob:
+
+    {"ok":true,"service":"LIVE FOOTBALL API proxy","configured":true,"cacheMinutes":20,"eventsDailyBudget":15,"dataScope":"yesterday, today, and tomorrow (UTC); client displays local-day fixtures"}
+
+bu xato emas, balki Cloudflare'dagi ([https://live-football-api.i-boburon.workers.dev](https://live-football-api.i-boburon.workers.dev)) Worker ichida hali ham eski (API-Football) kodi ishlab turganining belgisidir:
+
+    Eski Worker kodi Cloudflare'da qolib ketgan: worker.js faylini GitHub repozitoriyga yuklash Cloudflare Worker'ni avtomatik yangilamaydi (GitHub Pages faqat saytning ko'rinish qismini — index.html, app.js, lf-core.js va hokazolarni ishlatadi).
+
+    Endpointlar mos kelmayapti: Saytning yangi V3 versiyasi (lf-core.js) ESPN formatidagi /api/matches?days=YYYYMMDD manziliga murojaat qiladi, Cloudflare'dagi eski API-Football Worker esa bu manzilni tanimaydi.
+
+Kodda qo'shimcha tuzatilgan joylar (worker.js va lf-core.js)
+
+    Asosiy manzil (/) xatosi tuzatildi (worker.js): Avvalgi worker.js da Worker havolasining o'zini ([https://live-football-api.i-boburon.workers.dev/](https://live-football-api.i-boburon.workers.dev/)) brauzerda ochsangiz 404 xato qaytarardi. Endi / ham xuddi /api/health kabi "service": "LIVE FOOTBALL ESPN proxy" holatini qaytaradi, /api/matches esa sana berilmasa avtomatik bugungi kunni oladi.
+
+    ALLOWED_ORIGIN tekshiruvi kuchaytirildi (worker.js): Agar Cloudflare sozlamalarida ALLOWED_ORIGIN qiymatiga [https://avtojon.github.io/](https://avtojon.github.io/) (oxirida / bilan) yoki [https://avtojon.github.io/live-football-score](https://avtojon.github.io/live-football-score) yozib qo'yilsa ham 403 Origin not allowed xatosi chiqmasligi uchun manzil avtomatik tozalanadigan qilindi.
+
+    Jamoa logotiplari zahirasi qo'shildi (worker.js): ESPN ba'zi turnirlarda logotipni t.logo emas, t.logos[0].href ichida qaytaradi — ikkalasi ham tekshiriladigan qilindi.
+
+    Tungi o'yinlar (UTC+5) yo'qolmasligi ta'minlandi (lf-core.js): O'zbekiston vaqti bilan tungi 00:00–04:59 oralig'idagi Yevropa o'yinlari (Chempionlar Ligasi, La Liga va h.k.) UTC bo'yicha bitta oldingi kunga tushgani sababli "Yesterday" (Kecha) bo'limida tushib qolmasligi uchun UTC oyna qamrovi kengaytirildi.
+
+Ishga tushirish uchun qadamlar
+
+    Cloudflare Dashboard -> Workers & Pages -> live-football-api ga kiring.
+
+    Yuqori o'ng burchakdagi Edit code tugmasini bosing, ichidagi eski kodni to'liq o'chirib, yangilangan worker.js kodini joylang va Deploy tugmasini bosing.
+
+    Worker'ning Settings -> Variables and Secrets bo'limida ALLOWED_ORIGIN qiymati [https://avtojon.github.io](https://avtojon.github.io) ekanini tekshiring (eski API_FOOTBALL_KEY ni o'chirib tashlasangiz bo'ladi).
+
+    Yangilangan lf-core.js faylini GitHub repozitoriyga yuklab, brauzerda [https://live-football-api.i-boburon.workers.dev/api/health](https://live-football-api.i-boburon.workers.dev/api/health) manzilini ochib ko'ring — javobda "service": "LIVE FOOTBALL ESPN proxy", "version": 3 chiqishi bilan saytingizda barcha o'yinlar ESPN'dan yuklanadi.
+
+Hammsi yaxshi, ishladi, faqat visual dizayn (shunday desam to'g'ri bo'lsa kerak) ko'rinishini yanada qulay qilish kerak.
+
+Bu tugaga o'yin, saytga tashrif buyurtivchi chalg'imasligi uchun uni qandaydir belgili qilishimiz kerak, yani hozir FT bir chetda turibdi va foydalanuvchi buni birdan ko'rmasligi mumkin, shu sabab yakunlangan o'yinlar bo'yicha aniq ajratiladigan biror nima qilish kerak, keyin o'yin yakinlangan bo'lsa ham uning vaqtini ham ko'rsatib qo'ysak yaxshi bo'ladi (2 skrindagi kabi, keyin agar aynan shu o'yin bo'yicha video bo'lsa (yani havola biriktirlgan bo'lsa uni ham belgisi chiqishi kerak).
+
+-Keyin "Commentary" bo'limidagi narsalar-ma'lumotlar bu "TimeLine"da ham bor va u yerdagisi juda yaxshi ko'rinishda shu sabab "Commentary" bo'limi olib tashlash kerak yoki o'rniga boshqa ma'lumot qo'yish kerak, masalan. H2H'nimi yoki o'yingacha jamoalar (mana shu ikki jamoaga oid) ko'rsatkichlari yoko Texnik statistika, ohirgi o'yin natijasi - bir-bir bilan to'qnashganda qanday natija bo'lgan kabi yoki mana shu ikki jamoaga hos bo'lgan boshqa bir qiziqarli ma'lumot berilishi kerak, yangilikmi bilmadim, biror qiziqarliva esda qolarlik holatmi foydalanuvchini saytda uzoqrog' qolishiga hizmat qiladigan nimadir noodatiy bir yangilikmi)
+
+-keyin tarkib-Line-ups'da eng pastda - zahiradagilardan keyin sudyalarni ko'rsatsak ham yaxshi bo'ardi.
+
+-keyin o'yinchilar silueti ham yanada qiziiqarli ko'rinishda berilsa yaxshi, hozir shunchaki doira holos, shriftlarni ham yanada toza, yaxshi o'qiladiganini tanlash kerak va kattaroq qilish kerak - dizaynni buzmaydigan darajada.
+
+(ilova qilingan-referensdagi rasmdagi futbolchigar silueti hech bo'lmadanda shunday ko'rinsin - bu kamida shunday deyapman,, Sen yanada qiziqarliroq va chiroyliroq variant top. Men joylashuvni aytmayapman, futbolchi silueti yoki rasmimi shuni nazarda tutyapman, ideal yechim qil.)
+
+
+Yana boshqa sayt funsionali va qulaylikni yaxshilaydigan va mukammal qiladigan takliflar bo'lsa marhamat, faqat havfsizlik 1-orinda tursin, meni roziligimsim saytdan ma'lumot hech qayerga uzatilmasin.
+
+
+ESPN platformasi o'gir yuklama sabab (agar shunday holat yuz berishi mumkin bo'lsa) bizni cheklamaydigan qilish ishlash kerak.
+
+
+Ha, aytgancha o'yin uchun video havolani qayerdan kiritaman, masalan yakunlangan o'yin havolasini qo'ymoqchiman, uni qayerdan kiritaman - men topolmadim.
+
+Barcha takliflaringiz va skrinshotlar asosida worker.js, lf-core.js, app.js, admin.js hamda style.css fayllarini yangilab qo'ydim.
+Worker
+Lf Core
+App
+Admin
+Значок CSS-файла
+style
+ CSS 
+Nimalar o'zgardi va qo'shildi?
+
+    Yakunlangan o'yinlar (FT), vaqt va ▶ video belgisi (2-skrinshot uslubida):
+
+        Chap ustunda endi o'yinning boshlanish vaqti (01:00) va uning ostida aniq ajratilgan ✔ FT plashkasi ustma-ust chiqadi, hisob qutisi ostida esa ENDED yozuvi ko'rinadi.
+
+        G'olib jamoa nomi yorqin oq rangda ajratilib, yutqazgan jamoa biroz xiralashtiriladi — tashrif buyuruvchi o'yin tugaganini va kim yutganini bir qarashda tushunadi.
+
+        Video biriktirilgan o'yin qatorida (hamda o'sha liga sarlavhasida) yorqin yashil ▶ tugmasi chiqadi; uni bosganda darhol o'yinning Video bo'limi ochiladi.
+
+    "Commentary" o'rniga yangi H2H & Form bo'limi:
+
+        Takroriy matnlar olib tashlanib, o'rniga foydalanuvchini saytda uzoqroq ushlab turadigan H2H & Form tahlil bo'limi qo'shildi:
+
+            Match Insights & Pre-Match Facts: Jamoalarning turnir jadvalidagi o'rni, ochkolar farqi, o'rtacha gollar soni va o'zaro o'yinlar statistikasi asosida avtomatik shakllanadigan qiziqarli faktlar.
+
+            Match Momentum (G'alaba ehtimoli shkalasi): ESPN predictor yoki jamoalarning joriy formasi asosida hisoblangan foizli ustunlik chizig'i.
+
+            Head-to-Head (O'zaro o'yinlar tarixi): Ikki jamoaning avvalgi to'qnashuvlari natijalari va umumiy g'alaba/durang/gollar balansi.
+
+            Last 5 Matches (So'nggi 5 o'yin formasi): Har ikki jamoaning oxirgi 5 ta o'yini (W yashil, D sariq, L qizil) raqib logotipi va hisobi bilan.
+
+    Line-ups: Futbolchi siluetlari (Squard.png uslubida), shriftlar va Hakamlar (Officials):
+
+        Oddiy doiralar o'rniga bosh va yelka konturiga ega, neon nurlanib turuvchi futbolchi siluetlari (SVG) o'rnatildi: mezbonlar qizil-neon, mehmonlar ko'k-neon, darvozabonlar esa alohida zumrad-yashil libosda ko'rinadi.
+
+        Futbolchi raqami ko'krak qismida yirik va tiniq yoziladi, siluet yelkasida esa o'sha o'yinchining o'yindagi hodisalari (⚽ gol, 🟨/🟥 kartochka, 🔻 almashtirilgani) avtomatik chiqadi.
+
+        Zaxira o'yinchilari (Substitutes Bench) ostiga ⚖️ MATCH OFFICIALS & VENUE INFO bloki qo'shildi (Bosh hakam, yordamchi hakamlar, VAR, stadion va tomoshabinlar soni).
+
+        Saytning umumiy shrifti siqilgan Arial Narrow o'rniga toza va o'qishga qulay zamonaviy shriftlar oilasiga (system-ui, -apple-system, Segoe UI, Roboto) o'tkazildi.
+
+    ESPN yuklamasidan himoya va 100% maxfiylik:
+
+        worker.js va lf-core.js ichiga In-flight deduplikatsiya (bir vaqtda 100 ta foydalanuvchi kirsa ham ESPN'ga faqat 1 ta so'rov ketadi) hamda 6 soatlik Stale-cache zahirasi (ESPN vaqtincha sekinlashsa ham eski kesh uzluksiz ko'rsatiladi) qo'shildi.
+
+        Foydalanuvchi o'z sevimli o'yinlarini ☆ / ★ tugmasi orqali belgilab qo'yishi mumkin (★ Saved filtri) — barcha ma'lumot faqat foydalanuvchining o'z brauzerida (localStorage) saqlanadi, roziliksiz tashqariga hech qanday ma'lumot uzatilmaydi.
+
+O'yinga video havolani qayerdan kiritasiz? (3 ta oson usul)
+
+    To'g'ridan-to'g'ri o'yinning o'zidan (eng qulayi): Saytni bir marta ?admin=1 bilan ochganingizdan so'ng, istalgan (jumladan yakunlangan ✔ FT) o'yin ustiga bosing va Video tabiga o'ting — u yerda "🎬 Admin · Attach YouTube Video" maydoni chiqadi. YouTube havolani ([https://youtu.be/](https://youtu.be/)... yoki [youtube.com/watch?v=](https://youtube.com/watch?v=)...) qo'yib 💾 Save Video tugmasini bosing.
+
+    Pastki o'ng burchakdagi 🎛 CONTROL (Admin) panelidan: 🎛 CONTROL tugmasini bosing -> birinchi bo'lib 🎬 Video tabi ochiladi. Ro'yxatdan kerakli o'yinni tanlab (yakunlangan ✔ FT o'yinlar ro'yxat boshida chiqadi), YouTube havolani kiriting va 💾 Save Video ni bosing.
+
+    GitHub (videos.json) yoki Cloudflare KV orqali saqlash:
+
+        Agar Cloudflare Worker'ga ADMIN_TOKEN va NOTES (KV) ulangan bo'lsa, 💾 Save Video tugmasi videoni avtomatik ravishda barcha tashrif buyuruvchilar uchun serverga saqlaydi.
+
+        Agar KV ulanmagan bo'lsa, Admin paneldagi 📋 Copy videos.json tugmasini bossangiz, tayyor JSON nusxalanadi — uni GitHub'dagi videos.json fayliga joylab qo'yishingiz kifoya.
+
+Yangilangan worker.js ni Cloudflare Worker'ga (Edit code -> Deploy), qolgan 4 ta faylni (lf-core.js, app.js, admin.js, style.css) esa GitHub repozitoriyga yuklab sahifani Ctrl + F5 bilan yangilang.
+Готово
+
+
+Gemini — это ИИ. Он может ошибаться.
+Завершен
+
+:root{--bg:#030a12;--panel:#091725;--panel2:#0d1d2c;--line:#20364a;--muted:#9db0c2;--white:#f7faff;--green:#2df58a;--red:#ff3048;--blue:#159cff;--amber:#fbbf24}
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;background:radial-gradient(ellipse at 50% -20%,#102a43 0,transparent 50%),var(--bg);color:var(--white);font-family:"Arial Narrow","Roboto Condensed",Arial,sans-serif}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{margin:0;background:radial-gradient(ellipse at 50% -20%,#102a43 0,transparent 50%),var(--bg);color:var(--white);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;letter-spacing:.1px}
 a{color:inherit;text-decoration:none}
 button{font:inherit}
 .wrap{width:min(1420px,100%);margin:auto;padding:0 24px}
 header{position:sticky;top:0;z-index:20;background:rgba(3,10,18,.96);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
-.topbar{height:60px;display:flex;align-items:center;justify-content:space-between;gap:20px}
-.brand{display:flex;align-items:center;gap:10px;font-size:clamp(23px,2.6vw,34px);font-weight:1000;letter-spacing:-1.2px;white-space:nowrap}
-.ball{display:inline-grid;place-items:center;width:38px;height:38px;border:2px solid #dce8f5;border-radius:50%;font-size:23px;background:#10283d}
+.topbar{height:62px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.brand{display:flex;align-items:center;gap:10px;font-size:clamp(22px,2.4vw,30px);font-weight:900;letter-spacing:-.8px;white-space:nowrap}
+.ball{display:inline-grid;place-items:center;width:38px;height:38px;border:2px solid #dce8f5;border-radius:50%;font-size:22px;background:#10283d}
 .brand em{font-style:normal;color:var(--green)}
 nav{display:flex;align-items:center;gap:26px}
-nav a{padding:25px 0 22px;font-size:14px;font-weight:900;color:#c6d2de;border-bottom:3px solid transparent}
+nav a{padding:21px 0 19px;font-size:13.5px;font-weight:800;letter-spacing:.4px;color:#c6d2de;border-bottom:3px solid transparent}
 nav a.active,nav a:hover{color:var(--green);border-color:var(--green)}
 .nav-actions{display:flex;align-items:center;gap:10px}
 .iconbtn{width:40px;height:40px;border:1px solid var(--line);border-radius:10px;background:#0a1826;color:white;cursor:pointer;font-size:18px}
 main{padding-top:22px;padding-bottom:36px}
-.section-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:14px 0}.section-heading-copy{display:flex;flex-direction:column;gap:5px;min-width:0}.section-subtitle{font-size:12px;color:var(--muted);letter-spacing:.2px}.freshness{font-size:11px;color:#8da7bc;white-space:nowrap}
+.section-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:14px 0}.section-heading-copy{display:flex;flex-direction:column;gap:5px;min-width:0}.section-subtitle{font-size:13px;color:var(--muted);letter-spacing:.2px}.freshness{font-size:12px;color:#8da7bc;white-space:nowrap}
 h1,h2,h3,p{margin-top:0}
-h1{font-size:clamp(24px,2.8vw,34px);font-weight:1000;letter-spacing:-.6px;text-transform:none;margin-bottom:0}
-h2{font-size:clamp(23px,3vw,32px);font-weight:1000;letter-spacing:-.5px;text-transform:uppercase;margin-bottom:15px}
-h3{font-size:20px;font-weight:1000;text-transform:uppercase;margin-bottom:0}
-.livepill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid #176e4a;background:#0c261c;color:var(--green);border-radius:9px;font-size:13px;font-weight:1000;white-space:nowrap}
+h1{font-size:clamp(22px,2.6vw,32px);font-weight:900;letter-spacing:-.4px;text-transform:none;margin-bottom:0}
+h2{font-size:clamp(21px,2.6vw,28px);font-weight:900;letter-spacing:-.3px;text-transform:uppercase;margin-bottom:15px}
+h3{font-size:19px;font-weight:900;text-transform:uppercase;margin-bottom:0}
+.livepill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid #176e4a;background:#0c261c;color:var(--green);border-radius:9px;font-size:13px;font-weight:800;white-space:nowrap}
 .pulse{display:inline-block;height:9px;width:9px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green);animation:pulse 1.6s infinite}
 @keyframes pulse{50%{opacity:.45}}
 .ad{position:relative;min-height:96px;margin:20px 0;border:1px dashed #34536d;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;text-align:center;padding:18px;background:linear-gradient(110deg,#0d2034,#07121f 55%,#102a41)}
 .ad:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(125deg,transparent 0 36px,rgba(65,158,230,.04) 37px 39px);pointer-events:none}
-.ad strong{position:relative;display:block;font-size:clamp(21px,3vw,32px);font-weight:1000;letter-spacing:.3px}
+.ad strong{position:relative;display:block;font-size:clamp(20px,2.6vw,28px);font-weight:900;letter-spacing:.3px}
 .ad p{position:relative;color:#b7c7d6;font-size:13px;margin:6px 0 0}
 .ad small{position:absolute;right:10px;top:8px;color:#71889d;font-size:9px;letter-spacing:1px}
 .content-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
 .maincol,.sidecol{min-width:0}
 
-/* Tablar: Sichqoncha olib borilganda (:hover) — YASHIL, Ochiq turgan aktiv tab (.active) — QIZIL */
+/* Tablar */
 .filterbar{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 14px}
-.filter{border:1px solid var(--line);border-radius:9px;background:#091725;color:#c6d5e2;padding:10px 14px;font-size:13px;font-weight:900;cursor:pointer;transition:background .15s,border-color .15s,color .15s,box-shadow .15s}
+.filter{border:1px solid var(--line);border-radius:9px;background:#091725;color:#d2e0ec;padding:9px 14px;font-size:13px;font-weight:800;cursor:pointer;transition:background .15s,border-color .15s,color .15s,box-shadow .15s}
 .filter:hover:not(.active){background:#0d5c3c;border-color:#24d982;color:#ffffff}
 .filter.active{background:linear-gradient(135deg,#c91e36,#7a1021);border-color:var(--red);color:#ffffff;box-shadow:0 0 12px rgba(255,48,72,.35)}
+.filter.has-vid:not(.active){border-color:#53f62d;color:#7dff56;background:#0f2916}
 .date-filterbar{margin:10px 0 14px;padding-bottom:4px}
 .date-filterbar .filter{padding:8px 13px;font-size:12px;letter-spacing:.4px;text-transform:uppercase}
 
 .match-list{display:grid;gap:9px}
 
-/* Liga va Sana sarlavhalari — Barcha panel va bloklarda katta harflar va chiziq/rang bilan ajratilgan */
-.league-group-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;margin-top:10px;border:1px solid #24d982;border-left:4px solid var(--green);border-radius:10px;background:linear-gradient(90deg,#0b2920 0%,#0b1e30 65%,#081523 100%);box-shadow:0 4px 14px rgba(0,0,0,.28)}
-.league-group-banner:first-child{margin-top:0}
-.league-group-title{display:flex;align-items:center;gap:8px;color:var(--green);font-size:13px;font-weight:1000;letter-spacing:1.1px;text-transform:uppercase}
-.league-group-title::before{content:"🏆";font-size:13px}
-.league-group-date{padding:4px 9px;border:1px solid #294861;border-radius:6px;background:#07131f;color:#e3effa;font-size:11px;font-weight:900;letter-spacing:.7px;text-transform:uppercase;white-space:nowrap}
-.league-group-date.live-date{border-color:#1f7a53;background:#0c2d20;color:var(--green)}
-
 /* Panel ichidagi alohida ajratilgan Liga nomi */
-.league-badge-box{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:6px 14px;border:1px solid #24d982;border-radius:8px;background:linear-gradient(90deg,#0b2b20,#0d2236);color:var(--green);font-size:12px;font-weight:1000;letter-spacing:1.1px;text-transform:uppercase;box-shadow:0 0 14px rgba(45,245,138,.12)}
-.row-league-pill{display:inline-block;padding:4px 10px;border:1px solid #265170;border-radius:6px;background:#0b1f31;color:#7ce8b3;font-size:11px;font-weight:1000;letter-spacing:.9px;text-transform:uppercase}
+.league-badge-box{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:6px 14px;border:1px solid #24d982;border-radius:8px;background:linear-gradient(90deg,#0b2b20,#0d2236);color:var(--green);font-size:12.5px;font-weight:800;letter-spacing:.9px;text-transform:uppercase;box-shadow:0 0 14px rgba(45,245,138,.12)}
 
-/* Yon paneldagi 6 ta alohida Liga bloki sarlavhalari */
+/* Yon paneldagi Liga bloki sarlavhalari */
 .side-league-header{padding:12px 14px;border-bottom:1px solid #24d98266;background:linear-gradient(90deg,#0b2920,#091929)}
-.side-league-header .side-league-country{display:block;color:#9db6cc;font-size:10px;font-weight:900;letter-spacing:1.3px;text-transform:uppercase;margin-bottom:3px}
-.side-league-header .side-league-name{display:flex;align-items:center;justify-content:space-between;color:var(--green);font-size:16px;font-weight:1000;letter-spacing:.9px;text-transform:uppercase}
-.side-league-header .side-league-sub{color:#d8e6f3;font-size:10px;font-weight:900;padding:3px 7px;border:1px solid #274a66;border-radius:5px;background:#081523}
+.side-league-header .side-league-country{display:block;color:#9db6cc;font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:3px}
+.side-league-header .side-league-name{display:flex;align-items:center;justify-content:space-between;color:var(--green);font-size:15px;font-weight:900;letter-spacing:.6px;text-transform:uppercase}
+.side-league-header .side-league-sub{color:#d8e6f3;font-size:10px;font-weight:800;padding:3px 7px;border:1px solid #274a66;border-radius:5px;background:#081523}
 
-/* Yon paneldagi Foydali Ma'lumot / League Spotlight bloki (Reklama o'rniga) */
+/* Yon paneldagi Foydali Ma'lumot */
 .side-info-card{margin:14px 0;padding:14px 15px;border:1px solid #1f4968;border-left:4px solid var(--blue);border-radius:12px;background:linear-gradient(125deg,#0b2135,#071422)}
-.side-info-kicker{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--blue);font-size:10px;font-weight:1000;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px}
+.side-info-kicker{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--blue);font-size:10.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
 .side-info-kicker span.info-tag{padding:2px 6px;border-radius:4px;background:#0d2c47;color:#7cc8ff;border:1px solid #1e5582}
-.side-info-title{font-size:14px;font-weight:1000;color:var(--white);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
-.side-info-text{font-size:12px;line-height:1.5;color:#BDD0E0;margin:0}
-.side-info-link{display:inline-block;margin-top:8px;font-size:11px;font-weight:900;color:var(--green);letter-spacing:.5px;text-transform:uppercase}
-.side-info-link:hover{text-decoration:underline}
+.side-info-title{font-size:14px;font-weight:900;color:var(--white);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+.side-info-text{font-size:12.5px;line-height:1.5;color:#BDD0E0;margin:0}
 
 /* Hisob ostidagi real-time daqiqa va status ko'rinishi */
-.realtime-badge{display:inline-flex;align-items:center;justify-content:center;gap:5px;margin-top:4px;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:1000;letter-spacing:.5px;text-transform:uppercase;line-height:1.25}
+.realtime-badge{display:inline-flex;align-items:center;justify-content:center;gap:6px;margin-top:4px;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;line-height:1.25}
 .realtime-badge.is-live{background:#0c2f21;border:1px solid #1f7a53;color:var(--green)}
 .realtime-badge.is-ht{background:#2b220c;border:1px solid #8a6d1b;color:#ffd454}
-.realtime-badge.is-done{background:#111f2d;border:1px solid #273e52;color:#a9bdce}
+.realtime-badge.is-done{background:linear-gradient(90deg,#1a2c3e,#122231);border:1px solid #3c6082;color:#eef6ff;box-shadow:0 2px 8px rgba(0,0,0,.3)}
 .realtime-badge.is-upcoming{background:#0c1c2c;border:1px solid #1f3950;color:#c5d6e6}
 .live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 1.2s infinite;flex:none}
 
-/* 1-Skrin: Asosiy paneldagi gol mualliflari — kattalashtirilgan va o'qishga qulay */
-.scorers{display:flex;flex-direction:column;align-items:center;gap:5px;margin-top:10px;font-size:clamp(13px,1.35vw,15px);line-height:1.4;color:#e8f3fc;font-weight:800;max-width:100%;overflow-wrap:anywhere}
-.scorers span{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:3px 10px;border-radius:6px;background:rgba(12,35,54,.85);border:1px solid #234763;box-shadow:0 2px 6px rgba(0,0,0,.2)}
-.scorers span em{font-style:normal;color:var(--green);font-weight:1000}
+/* Asosiy paneldagi gol mualliflari */
+.scorers{display:flex;flex-direction:column;align-items:center;gap:5px;margin-top:10px;font-size:clamp(13px,1.3vw,14.5px);line-height:1.4;color:#e8f3fc;font-weight:700;max-width:100%;overflow-wrap:anywhere}
+.scorers span{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:4px 10px;border-radius:6px;background:rgba(12,35,54,.85);border:1px solid #234763;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.scorers span em{font-style:normal;color:var(--green);font-weight:800}
 
-.match-row{display:grid;grid-template-columns:minmax(0,1fr) 128px minmax(0,1fr) 20px;grid-template-rows:auto auto;row-gap:10px;column-gap:12px;align-items:center;text-align:center;padding:14px 16px;border:1px solid #1a3043;border-radius:12px;background:linear-gradient(105deg,#0b1927,#08131f);min-width:0;font:inherit;color:inherit;width:100%;cursor:pointer;transition:border-color .15s,background .15s}
-.match-row:hover,.match-row:focus-visible{border-color:#2df58a;outline:none}
-.match-row.selected{border-color:var(--red);box-shadow:inset 3px 0 0 var(--red);background:linear-gradient(105deg,#261019,#08131f)}
-.match-row[hidden]{display:none!important}
-.match-row .league{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;text-align:center;font-size:12px;line-height:1.35}
-.match-row .teamcell{min-width:0;display:flex;align-items:center;gap:8px;font-size:clamp(13px,1.25vw,16px);font-weight:900}
-.match-row .teamcell.home{grid-column:1;grid-row:2;justify-content:flex-end;text-align:right}
-.match-row .row-score{grid-column:2;grid-row:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:clamp(19px,2vw,24px);font-weight:1000;text-align:center;font-variant-numeric:tabular-nums;background:#102333;border:1px solid #203b50;border-radius:9px;padding:8px 6px;white-space:normal}
-.match-row .row-score.live{color:var(--green);background:#09271d;border-color:#1c6e4b}
-.match-row .row-status{display:block;font-size:10px;line-height:1.3;font-weight:900;white-space:normal}
-.match-row .teamcell.away{grid-column:3;grid-row:2;justify-content:flex-start;text-align:left}
-.match-row .arrow{grid-column:4;grid-row:2;font-size:24px;color:#a9bbca;text-align:right}
-.match-row .teamlabel{overflow-wrap:anywhere;word-break:normal}
-.mini-crest{font-size:26px;flex:none}
+.mini-crest{font-size:24px;flex:none}
 .side-card{border:1px solid #1d3449;border-radius:14px;background:#091725;overflow:hidden;margin-bottom:14px}
-.side-title{display:flex;align-items:center;justify-content:space-between;padding:15px 15px 12px;font-size:18px;font-weight:1000;text-transform:uppercase}
+.side-title{display:flex;align-items:center;justify-content:space-between;padding:14px 15px 11px;font-size:16px;font-weight:900;text-transform:uppercase}
 .side-title span{color:var(--green)}
-.next-feature{padding:18px 13px;background:radial-gradient(ellipse at 50% 0,#173b61,#091725 75%);text-align:center}
-.eyebrow{display:inline-block;padding:6px 10px;border-radius:6px;background:#0d4d8a;font-size:11px;font-weight:1000;letter-spacing:.8px}
-.derby{font-size:25px;font-weight:1000;margin:12px 0 17px}
 .vs-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
-.next-feature .featured-league{margin:0 0 16px;padding:0 6px;line-height:1.5}
-.next-feature .vs-row{margin-top:4px}
-.vs-team{font-weight:1000;font-size:12px}
-.vs-logo{display:block;font-size:42px;margin-bottom:6px}
+.vs-team{font-weight:800;font-size:13px}
+.vs-logo{display:block;font-size:40px;margin-bottom:6px}
 .vs-center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
-.vs{font-size:23px;font-weight:1000;color:#dce7f2;font-variant-numeric:tabular-nums}
-.kickoff{border-top:1px solid #25415a;margin-top:16px;padding-top:13px;font-size:14px;font-weight:900;line-height:1.8}
+.vs{font-size:22px;font-weight:900;color:#dce7f2;font-variant-numeric:tabular-nums}
+.kickoff{border-top:1px solid #25415a;margin-top:14px;padding-top:12px;font-size:13.5px;font-weight:800;line-height:1.7}
 .kickoff small{display:block;color:#a9bdce;font-weight:600}
-.fixture-list{padding:0 10px 10px}
 .small-ad{min-height:105px;margin:14px 0}
-.small-ad strong{font-size:20px}
+.small-ad strong{font-size:19px}
 .bottom-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}
-.promo{min-height:100px;border:1px solid #23425b;border-radius:12px;background:linear-gradient(115deg,#102b46,#071421);padding:17px;display:flex;align-items:center;gap:13px;cursor:pointer;text-align:left;color:inherit;width:100%;transition:border-color .15s,transform .15s}
+.promo{min-height:96px;border:1px solid #23425b;border-radius:12px;background:linear-gradient(115deg,#102b46,#071421);padding:16px;display:flex;align-items:center;gap:13px;cursor:pointer;text-align:left;color:inherit;width:100%;transition:border-color .15s,transform .15s}
 .promo:hover{border-color:var(--green);transform:translateY(-1px)}
 .promo-icon{display:grid;place-items:center;width:44px;height:44px;flex:none;border:1px solid #2678b3;border-radius:50%;font-size:22px}
-.promo b{display:block;font-size:16px;font-weight:1000;text-transform:uppercase}
-.promo small{display:block;color:#a9bdce;margin-top:5px;font-size:12px}
+.promo b{display:block;font-size:15px;font-weight:900;text-transform:uppercase}
+.promo small{display:block;color:#a9bdce;margin-top:4px;font-size:12.5px}
 footer{border-top:1px solid #1b3042;margin-top:28px;padding:23px 0;color:#8fa5b8}
 .footer-inner{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}
-footer strong{font-size:20px;color:#fff}
-footer a{margin-left:16px;font-size:12px}
+footer strong{font-size:19px;color:#fff}
+footer a{margin-left:16px;font-size:12.5px}
 
 .data-slot{border:1px solid #23435b;border-radius:15px;background:#06111d;overflow:hidden}
 .hero-slot{min-height:320px;padding:18px 24px;background:radial-gradient(ellipse at 50% 100%,#164f3b 0,transparent 58%),linear-gradient(110deg,#0d2945,#07111d 52%,#102a42)}
-.slot-top{display:flex;justify-content:space-between;align-items:center;gap:10px;color:#90a8bd;font-size:10px;font-weight:900;letter-spacing:1.2px}
-.slot-badge{padding:7px 10px;background:#123b2a;color:var(--green);border:1px solid #1c6845;border-radius:6px}
+.slot-top{display:flex;justify-content:space-between;align-items:center;gap:10px;color:#90a8bd;font-size:11px;font-weight:800;letter-spacing:1px}
+.slot-badge{padding:6px 10px;background:#123b2a;color:var(--green);border:1px solid #1c6845;border-radius:6px}
 .slot-size{color:#7893aa}
 .hero-placeholder{display:grid;grid-template-columns:1fr minmax(150px,.9fr) 1fr;align-items:center;gap:12px;margin:14px 0 12px;text-align:center}
-.placeholder-team{min-width:0}
-.placeholder-crest{width:clamp(64px,7vw,92px);height:clamp(64px,7vw,92px);display:grid;place-items:center;margin:0 auto 10px;border:1px dashed #45647c;border-radius:18px;background:#0a1d2d;color:#8fa8bc;font-size:10px;font-weight:900;letter-spacing:.5px}
-.placeholder-team-name{font-size:clamp(15px,2vw,24px);font-weight:1000}
+.placeholder-team{min-width:0;transition:opacity .2s}
+.placeholder-team.is-loser{opacity:.78}
+.placeholder-team.is-winner .placeholder-team-name{color:#ffffff;text-shadow:0 0 14px rgba(45,245,138,.25)}
+.win-check{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#134e35;border:1px solid var(--green);color:var(--green);font-size:12px;vertical-align:middle}
+.placeholder-crest{width:clamp(64px,7vw,92px);height:clamp(64px,7vw,92px);display:grid;place-items:center;margin:0 auto 10px;border:1px dashed #45647c;border-radius:18px;background:#0a1d2d;color:#8fa8bc;font-size:10px;font-weight:800}
+.placeholder-team-name{font-size:clamp(16px,2vw,24px);font-weight:900}
 .placeholder-score{display:flex;flex-direction:column;align-items:center;gap:6px}
-.placeholder-score>span{font-size:clamp(52px,7vw,86px);font-weight:1000;line-height:.9;color:#f4f8fc}
-.placeholder-score b{font-size:clamp(15px,1.8vw,22px)!important;color:var(--green);letter-spacing:.5px!important;line-height:1.2}
-.placeholder-score small{font-size:11px;color:#92a9bd;font-weight:900;letter-spacing:.4px}
-.empty-state{padding:18px 14px;border:1px dashed #31506a;border-radius:12px;color:#a8bbcb;text-align:center;background:#081522;font-size:12px;line-height:1.55;margin-top:8px}
+.placeholder-score>span{font-size:clamp(48px,6.5vw,82px);font-weight:900;line-height:.95;color:#f4f8fc;font-variant-numeric:tabular-nums}
+.placeholder-score small{font-size:12px;color:#a8bfd4;font-weight:700;letter-spacing:.3px}
+.hero-vid-btn{margin-top:4px;display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:99px;border:1px solid #66ff33;background:linear-gradient(90deg,#1a4712,#0e2d0a);color:#7dff4d;font-size:12px;font-weight:900;letter-spacing:.5px;cursor:pointer;box-shadow:0 0 14px rgba(102,255,51,.25)}
+.hero-vid-btn:hover{background:#66ff33;color:#041a02}
+.empty-state{padding:18px 14px;border:1px dashed #31506a;border-radius:12px;color:#b2c5d6;text-align:center;background:#081522;font-size:13px;line-height:1.55;margin-top:8px}
 .team-logo{width:clamp(58px,7vw,88px);height:clamp(58px,7vw,88px);object-fit:contain;filter:drop-shadow(0 6px 8px #0007)}
-.mini-logo{width:27px;height:27px;object-fit:contain;flex:none}
-.side-fixture-button{display:grid;grid-template-columns:1fr;gap:6px;align-items:center;width:100%;padding:12px 6px;border:0;border-top:1px solid #1b3042;background:transparent;color:inherit;text-align:center;cursor:pointer}
-.side-fixture-button:first-child{border-top:0}
-.side-fixture-button:hover{background:#0c2030}
-.side-fixture-button .fixture-teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;font-size:12px;font-weight:900;line-height:1.3}
-.side-fixture-button .side-team-home{display:flex;align-items:center;justify-content:flex-end;gap:5px;text-align:right;min-width:0}
-.side-fixture-button .side-team-away{display:flex;align-items:center;justify-content:flex-start;gap:5px;text-align:left;min-width:0}
-.side-fixture-button .side-team-home span,.side-fixture-button .side-team-away span{overflow-wrap:anywhere}
-.side-fixture-button .side-score-box{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 8px;border-radius:6px;background:#0e2233;border:1px solid #224059;color:var(--green);font-weight:1000;font-size:13px;min-width:54px}
-.side-fixture-button .fixture-date{font-size:11px;color:#b3c2cf;text-align:center;line-height:1.35}
-.pagination button{min-width:88px}
+.mini-logo{width:26px;height:26px;object-fit:contain;flex:none}
+.mini-logo-xs{width:18px;height:18px;object-fit:contain;vertical-align:middle;margin:0 4px}
 .promo.youtube-promo .promo-icon{display:grid;place-items:center;width:52px;height:38px;border-radius:10px;background:#ff0033;color:#fff;font-size:0;border:0;flex:none}
 .promo.youtube-promo .promo-icon svg{width:52px;height:38px;display:block}
 .section-head{margin-top:10px;margin-bottom:18px}
-.section-subtitle{line-height:1.4}
-.section-head#live h1{font-size:13px;font-weight:1000;letter-spacing:.4px;text-transform:uppercase;line-height:1.4}
+.section-head#live h1{font-size:14px;font-weight:900;letter-spacing:.4px;text-transform:uppercase;line-height:1.4}
 .api-status,.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .search-wrap{display:flex;align-items:center;gap:7px;order:2;margin-left:auto;min-width:40px}
 nav{order:3;margin-left:24px}
-#siteSearch{width:clamp(180px,22vw,290px);height:40px;padding:0 40px 0 12px;border:1px solid var(--line);border-radius:10px;background:#081725;color:#f4f8fc;outline:none}
+#siteSearch{width:clamp(180px,22vw,290px);height:40px;padding:0 40px 0 12px;border:1px solid var(--line);border-radius:10px;background:#081725;color:#f4f8fc;outline:none;font-size:14px}
 #siteSearch:focus{border-color:var(--green);box-shadow:0 0 0 2px #24d98222}
 #siteSearch[hidden],#searchClear[hidden]{display:none!important}
 .featured-empty{min-height:205px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;color:#b8c9d8}
 .featured-empty strong{font-size:clamp(19px,2vw,25px);color:#f3f7fb}
-.featured-empty span{font-size:13px;color:#91a8bc}
+.featured-empty span{font-size:13.5px;color:#91a8bc}
 .featured-league{margin:16px 0 8px;text-align:center}
-.featured-date{font-size:12px;color:#a9bdce;font-weight:700;line-height:1.4}
-.featured-venue{margin-top:14px;padding-top:12px;border-top:1px solid #25415a;text-align:center;color:#b8c9d8;font-size:13px}
+.featured-venue{margin-top:14px;padding-top:12px;border-top:1px solid #25415a;text-align:center;color:#b8c9d8;font-size:13.5px}
 
-/* League Tables Modal (6-talab bo'yicha tezkor turnir jadvali oynasi) */
-.tables-modal{position:fixed;z-index:110;inset:0;background:rgba(2,8,15,.82);backdrop-filter:blur(8px);display:grid;place-items:center;padding:16px}
-.tables-modal[hidden]{display:none!important}
-.tables-dialog{width:min(880px,100%);max-height:88vh;display:flex;flex-direction:column;border:1px solid #284c69;border-radius:16px;background:linear-gradient(145deg,#0a1b2b,#06101a);box-shadow:0 24px 60px rgba(0,0,0,.75);overflow:hidden}
-.tables-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;border-bottom:1px solid #1d364c;background:#081523}
-.tables-head h3{margin:0;color:var(--green);font-size:19px;letter-spacing:.8px}
-.tables-close{width:36px;height:36px;border:1px solid #29465e;border-radius:8px;background:#0d2133;color:#fff;font-size:18px;cursor:pointer}
-.tables-close:hover{border-color:var(--red);background:#5c101d}
-.tables-tabs{display:flex;gap:7px;flex-wrap:wrap;padding:12px 20px;border-bottom:1px solid #182e42;background:#07121e}
-.tables-body{padding:16px 20px;overflow-y:auto;display:grid;gap:14px}
-.standings-table{width:100%;border-collapse:collapse;font-size:13px}
-.standings-table th,.standings-table td{padding:9px 8px;border-bottom:1px solid #162a3d;text-align:center}
-.standings-table th{color:#8fa9bf;font-size:11px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;background:#091827}
-.standings-table td.st-team{text-align:left;font-weight:900;display:flex;align-items:center;gap:8px}
-.standings-table tr:hover{background:#0c2033}
-.st-rank{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:6px;background:#102436;font-weight:1000;font-size:12px}
-.st-rank.top4{background:#0c3524;color:var(--green);border:1px solid #1d6b47}
-.official-table-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 14px;border:1px solid #23445e;border-radius:10px;background:#091929}
-.official-table-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:8px;background:var(--green);color:#04150d;font-weight:1000;font-size:12px;letter-spacing:.5px;text-transform:uppercase}
+/* cookie */
+.cookie-banner{position:fixed;z-index:100;left:16px;right:16px;bottom:16px;max-width:860px;margin:auto;background:#0b1a29;border:1px solid #2b465e;border-radius:12px;box-shadow:0 15px 50px #0009;padding:17px;color:#e8f1f8}.cookie-banner p{font-size:13px;line-height:1.55;color:#b9c9d7;margin:7px 0 13px}.cookie-actions{display:flex;gap:8px;flex-wrap:wrap}.cookie-actions button{border:1px solid #37536b;border-radius:8px;padding:9px 12px;background:#12283b;color:#f4f8fc;font-weight:800;cursor:pointer}.cookie-actions .accept{background:#0d5c3c;border-color:#24d982}.cookie-banner a{color:#65e9aa}.cookie-settings-panel{position:fixed;z-index:101;inset:0;background:#0009;display:grid;place-items:center;padding:16px}.cookie-settings-card{max-width:460px;width:100%;background:#0b1a29;border:1px solid #2b465e;border-radius:12px;padding:20px;color:#e8f1f8}.cookie-settings-card label{display:flex;gap:9px;margin:13px 0;font-size:14px}.cookie-settings-card p{font-size:13px;color:#b9c9d7;line-height:1.5}.cookie-settings-card button{border:1px solid #37536b;border-radius:8px;padding:9px 12px;background:#12283b;color:#f4f8fc;font-weight:800;cursor:pointer;margin:4px 6px 0 0}
 
+/* ===== V2/V3 Umumiy elementlar ===== */
+.filter .cnt{margin-left:6px;padding:1px 6px;border-radius:6px;background:#ffffff1f;font-size:11px}
+.more-btn{display:block;width:calc(100% - 24px);margin:8px 12px 10px;padding:10px;border:1px dashed #31506a;border-radius:10px;background:#081522;color:#9fe3c0;font-weight:800;font-size:13px;cursor:pointer}
+.more-btn:hover{border-color:var(--green)}
+.hero-slot .status-line{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:6px}
+.admin-chip{display:inline-block;padding:5px 10px;border:1px solid #8a6d1b;border-radius:7px;background:#2b220c;color:#ffd454;font-size:11.5px;font-weight:800;letter-spacing:.5px}
+.slot-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.slot-actions button,.slot-actions a{border:1px solid #29465e;border-radius:8px;background:#0d2133;color:#dfeaf5;padding:8px 13px;font-size:12.5px;font-weight:800;cursor:pointer}
+.slot-actions button:hover{border-color:var(--green)}
+
+/* Timeline & Stats */
+.tl-row{display:grid;grid-template-columns:1fr 68px 1fr;gap:10px;align-items:center;padding:9px 4px;border-bottom:1px solid #12263a;font-size:14px}
+.tl-row.is-goal{background:linear-gradient(90deg,rgba(45,245,138,.05),rgba(45,245,138,.12) 50%,rgba(45,245,138,.05));border-radius:6px}
+.tl-row .tl-h{text-align:right}.tl-row .tl-a{text-align:left}
+.tl-m{text-align:center;font-weight:900;color:var(--green);font-variant-numeric:tabular-nums;background:#0b231a;border:1px solid #1c573e;border-radius:6px;padding:3px 6px;font-size:12.5px}
+.tl-row small{color:#95aec4;font-weight:600}
+.info-line{margin-top:12px;padding:8px 10px;border-radius:8px;background:#091928;color:#b2c6d8;font-size:12.5px;text-align:center;line-height:1.6}
+.stats-head{display:flex;justify-content:space-between;align-items:center;padding:6px 4px 10px;margin-bottom:8px;border-bottom:1px solid #172e44;font-size:13px;color:#9eb5c9;font-weight:800}
+.stats-head span{display:inline-flex;align-items:center;gap:7px}
+.sbar{margin:13px 0}.sbar .l{display:flex;justify-content:space-between;font-size:13.5px;font-weight:800;margin-bottom:6px;color:#d2e0ec}.sbar .l span{color:#9eb5c9;font-weight:700}
+.sbar .l b.hi{color:var(--green)}
+.sbar .b{height:10px;border-radius:6px;background:#159cff;overflow:hidden}.sbar .b i{display:block;height:100%;background:var(--green);transition:width .3s}
+
+/* ===== LINE-UPS: FUTBOLCHI SILUETI (Squard.png referensiga mos) + ZAXIRA + HAKAMLAR ===== */
+.pitches{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.pitch{background:#071422;border:1px solid #1a334a;border-radius:14px;padding:12px}
+.pitch h4{display:flex;justify-content:space-between;align-items:center;margin:0 0 10px;padding-bottom:8px;border-bottom:2px solid var(--green);font-size:15px;font-weight:900;text-transform:uppercase}
+.pitch-team{display:inline-flex;align-items:center;gap:8px}
+.pitch-form{padding:3px 9px;border-radius:6px;background:#10293f;border:1px solid #274d6e;color:#ffd454;font-size:12.5px;font-weight:800}
+.pitch.away h4{border-color:var(--blue)}
+
+/* Maydon chizig'i va maysa (Squard.png kabi chuqur stadion maysasi) */
+.fld{position:relative;aspect-ratio:4/5;border-radius:12px;border:2px solid rgba(255,255,255,.32);background:radial-gradient(ellipse at 50% 50%,rgba(45,245,138,.09) 0%,transparent 70%),repeating-linear-gradient(0deg,#155d32 0 9.09%,#114f2a 9.09% 18.18%);overflow:hidden;box-shadow:inset 0 0 40px rgba(0,0,0,.45)}
+.fld:before{content:"";position:absolute;left:22%;right:22%;bottom:0;height:15%;border:2px solid rgba(255,255,255,.28);border-bottom:0;pointer-events:none}
+.fld-markings-top{position:absolute;left:22%;right:22%;top:0;height:15%;border:2px solid rgba(255,255,255,.22);border-top:0;pointer-events:none}
+.fld-midline{position:absolute;left:0;right:0;top:50%;height:2px;background:rgba(255,255,255,.22);pointer-events:none}
+.fld-circle{position:absolute;left:50%;top:50%;width:24%;aspect-ratio:1/1;transform:translate(-50%,-50%);border:2px solid rgba(255,255,255,.22);border-radius:50%;pointer-events:none}
+
+/* Futbolchi konteyneri */
+.pl{position:absolute;transform:translate(-50%,-50%);text-align:center;width:24%;max-width:110px;z-index:2;display:flex;flex-direction:column;align-items:center;transition:transform .15s}
+.pl:hover{transform:translate(-50%,-53%) scale(1.07);z-index:5}
+.pl-fig{position:relative;width:clamp(42px,4.8vw,56px);height:clamp(38px,4.3vw,50px);display:grid;place-items:center}
+.pl-svg{width:100%;height:100%;overflow:visible}
+.pl-svg .sil-glow{stroke-width:2.6; stroke-linejoin:round}
+.pl-svg .sil-collar{fill:none;stroke:rgba(255,255,255,.45);stroke-width:1.8;stroke-linecap:round}
+
+/* Jamoa libosi ranglari va neon nurlanishi (Squard.png uslubida) */
+.kit-home .sil-glow{fill:#d91b38;stroke:#ff6e85;filter:drop-shadow(0 0 8px rgba(255,56,92,.65))}
+.kit-away .sil-glow{fill:#0e74d8;stroke:#68c2ff;filter:drop-shadow(0 0 8px rgba(21,156,255,.65))}
+.kit-gk-h .sil-glow,.kit-gk-a .sil-glow{fill:#0ea563;stroke:#57f7ac;filter:drop-shadow(0 0 8px rgba(45,245,138,.65))}
+
+/* Ko'krakdagi o'yinchi raqami */
+.pl-num{position:absolute;bottom:14%;left:50%;transform:translateX(-50%);font-size:clamp(13px,1.5vw,16.5px);font-weight:900;color:#ffffff;text-shadow:0 1px 4px rgba(0,0,0,.95);letter-spacing:-.3px;line-height:1;pointer-events:none}
+
+/* O'yinchi ismi yozilgan plashka (Squard.png kabi) */
+.pl-tag{margin-top:-2px;padding:3px 8px;border-radius:6px;background:rgba(4,12,20,.92);border:1.5px solid #ff5670;box-shadow:0 3px 8px rgba(0,0,0,.65);max-width:100%;min-width:56px}
+.kit-away .pl-tag{border-color:#45b1ff}
+.kit-gk-h .pl-tag,.kit-gk-a .pl-tag{border-color:#3df59b}
+.pl-tag span{display:block;font-size:clamp(11px,1.2vw,13px);font-weight:800;color:#f8fbff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.15px;line-height:1.2}
+
+/* O'yinchi ustidagi gol/kartochka belgilari */
+.pl-badges{position:absolute;top:-4px;right:-6px;display:flex;gap:2px;z-index:3}
+.pl-b{display:inline-grid;place-items:center;min-width:17px;height:17px;padding:0 3px;border-radius:99px;background:#07131f;border:1px solid #2c4c68;font-size:10px;font-weight:900;box-shadow:0 2px 5px #000a}
+
+/* Zaxira o'rindig'i (Substitutes) */
+.bench{margin-top:12px;padding-top:10px;border-top:1px solid #162b3f}
+.bench-title{font-size:11px;font-weight:900;color:#8da7bc;letter-spacing:1px;margin-bottom:7px;text-transform:uppercase}
+.bench-grid{display:flex;flex-wrap:wrap;gap:6px}
+.bench-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:7px;background:#0b1c2c;border:1px solid #1d364d;font-size:12.5px;font-weight:700;color:#d6e4f0}
+.bench-chip b{color:var(--green);font-weight:900;font-size:11.5px}
+.bench-chip small{color:#819cb3;font-size:10.5px;font-weight:700}
+.bench-chip.came-on{border-color:#1f7a53;background:#0b261c;color:#fff}
+.bench-chip em{font-style:normal;font-size:11px}
+
+/* Hakamlar va Stadion bloki (Line-ups eng pastida) */
+.officials-card{margin-top:14px;padding:13px 15px;border:1px solid #1d3850;border-left:4px solid #ffd454;border-radius:12px;background:linear-gradient(90deg,#0b1c2c,#081420)}
+.officials-head{font-size:12px;font-weight:900;color:#ffd454;letter-spacing:1px;text-transform:uppercase;margin-bottom:9px}
+.officials-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.off-item{padding:8px 11px;border-radius:8px;background:#07121d;border:1px solid #162b3e}
+.off-role{display:block;font-size:10.5px;font-weight:800;color:#8da7bc;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px}
+.off-name{display:block;font-size:13.5px;font-weight:800;color:#f2f7fc}
+
+/* ===== H2H & FORM BO'LIMI ===== */
+.h2h-wrap{display:grid;gap:14px}
+.insight-box{padding:13px 15px;border:1px solid #1f5c42;border-left:4px solid var(--green);border-radius:12px;background:linear-gradient(110deg,#0a241b,#081624)}
+.insight-title{font-size:12px;font-weight:900;color:var(--green);letter-spacing:1px;margin-bottom:8px;text-transform:uppercase}
+.insight-list{margin:0;padding-left:18px;display:grid;gap:6px;font-size:13.5px;line-height:1.5;color:#dce9f5}
+.insight-list b{color:#fff}
+
+.pred-card{padding:12px 14px;border:1px solid #1b344a;border-radius:11px;background:#081624}
+.pred-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;font-weight:800;margin-bottom:8px}
+.pred-mid{font-size:11px;color:#95aec4;letter-spacing:.8px;text-transform:uppercase}
+.pred-bar{display:flex;height:11px;border-radius:99px;overflow:hidden;background:#102233;gap:2px}
+.pb-h{background:var(--green);height:100%}
+.pb-d{background:#64748b;height:100%}
+.pb-a{background:var(--blue);height:100%}
+
+.tape-grid{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;padding:12px 14px;border:1px solid #1b344a;border-radius:11px;background:#081523}
+.tape-side{display:flex;flex-direction:column;gap:7px}
+.tape-side.away{align-items:flex-end;text-align:right}
+.tape-team{display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:900}
+.tape-vs{padding:6px 10px;border-radius:8px;background:#0d2235;border:1px solid #24435e;font-size:12px;font-weight:900;color:#9db6cc}
+.tape-meta{font-size:12.5px;color:#9eb5c9}
+.tape-meta b{color:#fff}
+
+.form-strip{display:inline-flex;gap:5px}
+.f-pill{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:6px;font-size:11.5px;font-weight:900;color:#fff;flex:none}
+.f-pill.is-w{background:#108548;border:1px solid #2df58a;color:#eafff3}
+.f-pill.is-d{background:#6b5314;border:1px solid #fbbf24;color:#fff8db}
+.f-pill.is-l{background:#7c1929;border:1px solid #ff5c72;color:#ffe6ea}
+
+.h2h-section{border:1px solid #1b344a;border-radius:11px;background:#081523;overflow:hidden}
+.h2h-sec-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:10px 14px;background:#0b1d2e;border-bottom:1px solid #182f44;font-size:12px;font-weight:900;color:var(--green);letter-spacing:.7px}
+.h2h-summary{color:#cfe0ee;font-size:12px}
+.h2h-list{display:grid}
+.h2h-item{display:grid;grid-template-columns:130px 1fr 72px 1fr;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid #112436;font-size:13.5px}
+.h2h-item:last-child{border-bottom:0}
+.h2h-date{font-size:11.5px;color:#8da7bc;font-weight:700}
+.h2h-Date small{color:#6f8ba1}
+.h2h-t{font-weight:700;color:#b8cade;display:inline-flex;align-items:center;gap:5px}
+.h2h-t.home{justify-content:flex-end;text-align:right}
+.h2h-t.win{color:#fff;font-weight:900}
+.h2h-sc{text-align:center;font-weight:900;background:#0d2234;border:1px solid #213d56;border-radius:6px;padding:3px 6px;color:#fff;font-variant-numeric:tabular-nums}
+
+.h2h-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.h2h-col{border:1px solid #1b344a;border-radius:11px;background:#081523;overflow:hidden}
+.h2h-col-head{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#0b1d2e;border-bottom:1px solid #182f44;font-size:13px;font-weight:900}
+.form-row{display:grid;grid-template-columns:26px 82px 1fr auto;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #112436;font-size:13px}
+.form-row:last-child{border-bottom:0}
+.form-date{font-size:11.5px;color:#8da7bc}
+.form-opp{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#d6e4f0}
+.form-sc{font-weight:900;color:#fff;font-variant-numeric:tabular-nums;padding:2px 7px;border-radius:5px;background:#0d2234}
+
+/* Video Admin Box */
+.vid-admin-box{margin-bottom:12px;padding:12px 14px;border:1px solid #2b543a;border-radius:10px;background:#081b14}
+.vid-admin-title{font-size:13px;color:var(--green);margin-bottom:8px}
+.vid-admin-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.vid-url-in{flex:1;min-width:220px;padding:8px 11px;border:1px solid #284b68;border-radius:8px;background:#07131f;color:#fff;font-size:13.5px}
+
+/* Turnir jadvali (Table) */
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px}.tbl th{color:#8da7bc;font-size:11.5px;text-align:right;padding:7px 6px;border-bottom:1px solid #1d3449}.tbl td{padding:8px 6px;text-align:right;border-bottom:1px solid #12263a;font-variant-numeric:tabular-nums}
+.tbl th:nth-child(2),.tbl td:nth-child(2){text-align:left}.tbl td.t{display:flex;align-items:center;gap:8px;font-weight:800}.tbl tr.hl td{background:#0d2a21;color:var(--green)}.tbl td b{color:#fff}
+.tbl img{width:20px;height:20px;object-fit:contain}.tbl-wrap{max-height:430px;overflow:auto}
+.grp-name{margin:12px 0 4px;color:var(--green);font-size:12px;font-weight:900;letter-spacing:1px;text-transform:uppercase}
+.vid{display:block;width:100%;aspect-ratio:16/9;border:0;border-radius:12px;background:#000}
+.spot-body{padding:6px 12px 14px;text-align:center}.spot-body .vs-row{cursor:pointer}
+.spot-body .kickoff{margin-top:12px}
+.comp-list{padding:0 10px 12px;display:grid;gap:6px}.comp-list button{display:flex;justify-content:space-between;align-items:center;border:1px solid #1a3043;border-radius:9px;background:#08131f;color:#dfeaf5;padding:9px 11px;font-size:13.5px;font-weight:800;cursor:pointer;text-align:left}.comp-list button:hover{border-color:var(--green)}.comp-list small{color:#8da7bc}
+body.stream .ad,body.stream .cookie-banner,body.stream .bottom-grid{display:none!important}
+
+/* ===== Admin paneli ===== */
+#admBtn{position:fixed;right:16px;bottom:16px;z-index:60;border:1px solid #8a6d1b;border-radius:99px;background:#2b220c;color:#ffd454;padding:10px 16px;font-weight:900;letter-spacing:.8px;cursor:pointer;box-shadow:0 8px 24px #000a}
+#admDrawer{position:fixed;top:12px;right:12px;bottom:70px;width:min(480px,calc(100vw - 24px));z-index:61;overflow:auto;border:1px solid #2a4a63;border-radius:14px;background:#07131f;box-shadow:0 20px 60px #000c;color:#e6eef7;font-size:14px}
+#admDrawer[hidden]{display:none}
+.adm-h{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid #1d3449;font-weight:900}
+.adm-h button,#admDrawer button,#admDrawer select,#admDrawer input[type=number]{font:inherit;border:1px solid #2c4b63;border-radius:9px;background:#0d2133;color:#fff;padding:8px 12px;cursor:pointer}
+#admDrawer button:hover{border-color:var(--green)}
+.adm-s{padding:14px 16px;border-bottom:1px solid #12263a;display:grid;gap:9px}
+.adm-s h4{margin:0;color:var(--green);font-size:12px;letter-spacing:1.2px;text-transform:uppercase}
+.adm-err{color:#ff8a8a}.adm-ok{color:#86efac}.adm-mut{color:#8da7bc;font-size:12.5px;line-height:1.45}
+.adm-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.adm-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px 10px}.adm-grid label{display:flex;gap:7px;align-items:center;font-size:13px}
+#admDrawer select{width:100%}
+
+/* ===== V3.2: LIVESCORE RO'YXATI (2-skrinshotdagi kabi vaqt + FT, g'olib jamoa, ▶ video belgisi) ===== */
+.ls-bar{display:grid;gap:10px;margin-bottom:14px}
+.ds-wrap{display:flex;align-items:center;gap:6px}
+.ds-arrow{flex:none;width:36px;height:42px;border:1px solid #21394e;border-radius:10px;background:#0a1826;color:#cfe0ee;font-size:22px;font-weight:900;cursor:pointer}
+.ds-arrow:hover{border-color:var(--green);color:var(--green)}
+.datestrip{display:flex;gap:6px;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:none;flex:1;padding:2px}
+.datestrip::-webkit-scrollbar{display:none}
+.ds-btn{flex:none;min-width:86px;text-align:center;border:1px solid #21394e;border-radius:10px;background:#0a1826;color:#c9d8e6;padding:7px 10px;font-weight:800;cursor:pointer;line-height:1.2}
+.ds-btn small{display:block;font-size:10.5px;color:#8da7bc;font-weight:700;letter-spacing:.3px;margin-top:2px}
+.ds-btn.active{background:var(--green);border-color:var(--green);color:#03120b}.ds-btn.active small{color:#0a3a22}
+.ds-btn.live{border-color:#7b1d2a;color:#ffb3bd}.ds-btn.live.active{background:#d4223c;border-color:#d4223c;color:#fff}.ds-btn.live.active small{color:#ffd5db}
+.ls-filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.seg{display:inline-flex;border:1px solid #21394e;border-radius:10px;overflow:hidden;flex-wrap:wrap}
+.seg button{border:0;background:#0a1826;color:#c9d8e6;padding:8px 13px;font-weight:800;font-size:13px;cursor:pointer;border-right:1px solid #21394e}
+.seg button:last-child{border-right:0}.seg button.active{background:#13324a;color:var(--green)}
+.seg .cnt{margin-left:6px;font-size:11px;opacity:.8}
+.pill-x{border:1px solid #1e6447;border-radius:99px;background:#0b281d;color:var(--green);padding:6px 12px;font-size:12.5px;font-weight:800;cursor:pointer}
+.ls-note{color:#88a1b7;font-size:12px}
+
+.lg-block{margin-bottom:12px;border:1px solid #1a3043;border-radius:12px;background:#07131f;overflow:hidden}
+.lg-head{display:flex;align-items:center;gap:10px;width:100%;border:0;border-bottom:1px solid #16293a;background:linear-gradient(90deg,#0d2a21,#08151f 70%);color:#fff;padding:11px 14px;cursor:pointer;text-align:left}
+.lg-head b{color:var(--green);font-size:14.5px;font-weight:900;letter-spacing:.6px;text-transform:uppercase}.lg-head small{color:#9db6cc;font-size:11.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.lg-vid-dot{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#65ff24;color:#051a00;font-size:10px;font-weight:900;box-shadow:0 0 10px rgba(101,255,36,.4)}
+.lg-head .lg-n{margin-left:auto;font-size:11.5px;font-weight:800;color:#9db6cc}.lg-head .lg-n.live{color:#ff8a98}.lg-head .lg-c{color:#6f8ba1;font-size:12px}
+
+/* O'yin qatori */
+.lrow{display:grid;grid-template-columns:82px 1fr 98px 1fr auto;align-items:center;gap:10px;width:100%;border:0;border-bottom:1px solid #102334;border-left:3px solid transparent;background:transparent;color:#eef5fb;padding:11px 14px;cursor:pointer;text-align:left;font:inherit;transition:background .15s}
+.lrow:hover{background:#0b1d2c}
+.lrow.open{background:#0d2336;border-left-color:var(--green)}
+.lrow.is-live-row{border-left-color:var(--red);background:linear-gradient(90deg,rgba(255,48,72,.07),transparent 35%)}
+.lrow.is-fin{border-left-color:#3b5c7a;background:rgba(9,20,32,.65)}
+
+/* Chap ustun: Vaqt + Status ustma-ust (2-skrinshotdagi kabi: 01:00 / FT) */
+.lr-st{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-variant-numeric:tabular-nums;line-height:1.15;text-align:center}
+.lr-day{font-size:10px;color:#7f9ab2;font-weight:700}
+.lr-time{font-size:13px;font-weight:800;color:#c2d4e4}
+.lr-time.is-ko{font-size:14px;font-weight:900;color:#eef6ff}
+.st-badge{display:inline-flex;align-items:center;justify-content:center;padding:2px 7px;border-radius:5px;font-size:10.5px;font-weight:900;letter-spacing:.5px;text-transform:uppercase}
+.st-badge.is-ft{background:#182b3d;border:1px solid #3c6082;color:#d6e8f8}
+.st-badge.is-live{background:#3a0f18;border:1px solid #ff4760;color:#ff8595;animation:pulse 1.5s infinite}
+.st-badge.is-ht{background:#2f240c;border:1px solid #bb9225;color:#ffd86b}
+.st-badge.is-up{background:#0c2233;border:1px solid #1e425e;color:#7fb5dc;font-size:9.5px}
+.st-badge.is-pp{background:#2a171c;border:1px solid #7d3545;color:#f3a6b4}
+
+/* Jamoa nomlari (G'olib jamoa aniq ajralib turadi) */
+.lr-t{display:flex;align-items:center;gap:10px;min-width:0;font-weight:800;font-size:15.5px;color:#dce8f4}
+.lr-t.home{justify-content:flex-end;text-align:right}
+.lr-t b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:800}
+.lr-t.is-winner{color:#ffffff}
+.lr-t.is-winner b{font-weight:900;color:#ffffff;text-shadow:0 0 10px rgba(255,255,255,.15)}
+.lr-t.is-loser{color:#8aa1b6}
+.lr-t.is-loser b{font-weight:700}
+.lr-t img,.lr-t .mini-crest{width:24px;height:24px;object-fit:contain;flex:none}
+
+/* Markaziy hisob qutisi */
+.lr-sc{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:900;font-size:18px;letter-spacing:.8px;background:#0c2030;border:1px solid #1f3c54;border-radius:9px;padding:5px 8px;font-variant-numeric:tabular-nums;line-height:1.1}
+.lr-sc.live{color:var(--green);border-color:#1e6447;background:#0a2018;box-shadow:0 0 12px rgba(45,245,138,.12)}
+.lr-sc.fin{background:#102233;border-color:#345573;color:#f5f9ff}
+.sc-sub{display:block;font-size:9px;font-weight:900;letter-spacing:.9px;color:#89a6c0;margin-top:2px;text-transform:uppercase}
+.sc-sub.live-sub{color:var(--green)}
+
+/* O'ng tomondagi Video (▶), Sevimli (☆) va Ochish (⌄) tugmalari */
+.lr-actions{display:inline-flex;align-items:center;justify-content:flex-end;gap:7px}
+.vid-pill{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;border:0;background:#65ff24;color:#051a00;font-size:12px;font-weight:900;cursor:pointer;box-shadow:0 0 12px rgba(101,255,36,.45);transition:transform .15s}
+.vid-pill:hover{transform:scale(1.12);background:#82ff4d}
+.fav-btn{border:0;background:transparent;color:#5c7891;font-size:17px;line-height:1;padding:3px;cursor:pointer;transition:color .15s,transform .15s}
+.fav-btn:hover{color:#ffd454;transform:scale(1.15)}
+.fav-btn.on{color:#ffd454}
+.lr-sh,.lr-sa{display:none}
+.lr-ch{color:#6f8ba1;font-size:16px;text-align:center;transition:transform .2s;width:18px}
+.lrow.open .lr-ch{transform:rotate(180deg);color:var(--green)}
+
+.mdetail{border-bottom:1px solid #16293a;background:#06101a;padding:0}
+.md-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px;border-bottom:1px solid #12263a;background:#07121e}.md-tabs .filter{padding:7px 13px;font-size:12.5px}
+.md-body{padding:14px 16px;min-height:90px}
+.cm-pin{margin-bottom:10px;padding:10px 12px;border:1px solid #1e6447;border-radius:10px;background:#0b281d;font-weight:800;font-size:13.5px}
+.cm-note{padding:9px 12px;margin-bottom:8px;border-left:4px solid var(--green);border-radius:8px;background:#0a1826;font-size:13.5px}.cm-note small{display:block;color:#8da7bc;font-size:11px;margin-bottom:2px}
+.hero-slot #heroDetail .mdetail{margin-top:14px;border:1px solid #1d3449;border-radius:12px;overflow:hidden}
+
+/* Mobil va Planshet moslashuvi (2-skrinshotdagi kabi ustma-ust jamoalar va o'ngda hisob + ▶ video) */
 @media(max-width:1000px){
   .content-grid{grid-template-columns:minmax(0,1fr) 300px}
   .wrap{padding-left:18px;padding-right:18px}
-  .match-row{grid-template-columns:minmax(0,1fr) 110px minmax(0,1fr) 16px;gap:8px;padding:12px 10px}
 }
 @media(max-width:760px){
   .topbar{height:auto;min-height:65px;flex-wrap:wrap;padding-top:10px;padding-bottom:8px;position:relative}
   .ball{width:32px;height:32px;font-size:19px}
   nav{order:3;width:100%;justify-content:space-between;gap:12px;margin-left:0}
-  nav a{padding:9px 0 7px;font-size:12px}
+  nav a{padding:9px 0 7px;font-size:12.5px}
   .search-wrap{order:2;margin-left:auto}
   .search-wrap #siteSearch{position:absolute;top:67px;right:14px;z-index:20;width:min(78vw,320px);box-shadow:0 10px 25px #0008}
   .search-wrap #searchClear{position:absolute;top:67px;right:14px;z-index:21;width:32px;height:32px;min-width:32px;border:0;background:transparent}
@@ -207,150 +528,47 @@ nav{order:3;margin-left:24px}
   .sidecol{display:grid;grid-template-columns:1fr;gap:0}
   .bottom-grid{grid-template-columns:1fr}
   .promo{min-height:78px}
-  .match-row{grid-template-columns:minmax(0,1fr) 98px minmax(0,1fr);gap:6px;padding:12px 8px}
-  .match-row .arrow{display:none}
-  .match-row .teamcell{font-size:12px;gap:4px}
-  .match-row .mini-logo{width:22px;height:22px}
   .hero-slot{padding:16px 10px}
   .hero-placeholder{grid-template-columns:minmax(0,1fr) minmax(96px,.85fr) minmax(0,1fr);gap:5px}
   .hero-placeholder .team-logo{width:52px;height:52px}
-  .hero-placeholder .placeholder-team-name{font-size:clamp(12px,3vw,17px)}
-  .hero-placeholder .placeholder-score>span{font-size:clamp(35px,9vw,56px)}
+  .hero-placeholder .placeholder-team-name{font-size:clamp(13px,3.2vw,17px)}
+  .hero-placeholder .placeholder-score>span{font-size:clamp(34px,8.5vw,54px)}
   .scorers{font-size:12.5px}
-  .league-group-banner{padding:8px 10px}
-  .league-group-title{font-size:11px}
+  .pitches,.h2h-cols{grid-template-columns:1fr}
+  .tape-grid{grid-template-columns:1fr;text-align:center}
+  .tape-side,.tape-side.away{align-items:center;text-align:center}
+  .h2h-item{grid-template-columns:92px 1fr 58px 1fr;font-size:12.5px;padding:8px 10px}
+  .tl-row{grid-template-columns:1fr 56px 1fr;font-size:13px}
 }
-@media(max-width:420px){
-  .wrap{padding-left:11px;padding-right:11px}
-  .brand{font-size:22px}
-  .match-row{grid-template-columns:minmax(0,1fr) 86px minmax(0,1fr);gap:4px;padding:10px 5px}
-  .match-row .row-score{font-size:15px;padding:6px 3px}
-  .match-row .row-status{font-size:9px}
-  .match-row .teamcell{font-size:10px}
-  .match-row .mini-logo{width:18px;height:18px}
-}
-
-/* cookie / pagination */
-.pagination{display:flex;align-items:center;justify-content:center;gap:12px;padding:16px 0;color:#b9c9d7;font-size:13px}.pagination button:disabled{opacity:.4;cursor:not-allowed}.cookie-banner{position:fixed;z-index:100;left:16px;right:16px;bottom:16px;max-width:860px;margin:auto;background:#0b1a29;border:1px solid #2b465e;border-radius:12px;box-shadow:0 15px 50px #0009;padding:17px;color:#e8f1f8}.cookie-banner p{font-size:13px;line-height:1.55;color:#b9c9d7;margin:7px 0 13px}.cookie-actions{display:flex;gap:8px;flex-wrap:wrap}.cookie-actions button{border:1px solid #37536b;border-radius:8px;padding:9px 12px;background:#12283b;color:#f4f8fc;font-weight:800;cursor:pointer}.cookie-actions .accept{background:#0d5c3c;border-color:#24d982}.cookie-banner a{color:#65e9aa}.cookie-settings-panel{position:fixed;z-index:101;inset:0;background:#0009;display:grid;place-items:center;padding:16px}.cookie-settings-card{max-width:460px;width:100%;background:#0b1a29;border:1px solid #2b465e;border-radius:12px;padding:20px;color:#e8f1f8}.cookie-settings-card label{display:flex;gap:9px;margin:13px 0;font-size:14px}.cookie-settings-card p{font-size:13px;color:#b9c9d7;line-height:1.5}.cookie-settings-card button{border:1px solid #37536b;border-radius:8px;padding:9px 12px;background:#12283b;color:#f4f8fc;font-weight:800;cursor:pointer;margin:4px 6px 0 0}
-
-/* ===== V2 qo'shimchalar ===== */
-.filter .cnt{margin-left:6px;padding:1px 6px;border-radius:6px;background:#ffffff1f;font-size:11px}
-.chip-row{margin:0 0 12px}.chip-row .filter{padding:6px 11px;font-size:12px}
-.more-btn{display:block;width:100%;margin:6px 0 2px;padding:9px;border:1px dashed #31506a;border-radius:10px;background:#081522;color:#9fe3c0;font-weight:900;cursor:pointer}
-.more-btn:hover{border-color:var(--green)}
-.match-row.compact{grid-template-rows:auto}
-.match-row.compact .teamcell.home,.match-row.compact .row-score,.match-row.compact .teamcell.away,.match-row.compact .arrow{grid-row:1}
-.row-score .row-time{font-size:18px}
-.hero-slot .status-line{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:6px}
-.admin-chip{display:inline-block;padding:5px 10px;border:1px solid #8a6d1b;border-radius:7px;background:#2b220c;color:#ffd454;font-size:11px;font-weight:900;letter-spacing:.6px}
-.slot-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;margin-top:12px}
-.slot-actions button,.slot-actions a{border:1px solid #29465e;border-radius:8px;background:#0d2133;color:#dfeaf5;padding:7px 12px;font-size:12px;font-weight:900;cursor:pointer}
-.slot-actions button:hover{border-color:var(--green)}
-.centre{margin-top:16px;border:1px solid #23435b;border-radius:15px;background:#06111d;overflow:hidden}
-.centre-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px;border-bottom:1px solid #182e42;background:#07121e}
-.centre-tabs .filter{padding:8px 12px;font-size:12px}
-.centre-body{padding:14px 16px;min-height:120px}
-.tl-row{display:grid;grid-template-columns:1fr 64px 1fr;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #12263a;font-size:14px}
-.tl-row .tl-h{text-align:right}.tl-row .tl-a{text-align:left}
-.tl-m{text-align:center;font-weight:1000;color:var(--green);font-variant-numeric:tabular-nums}
-.tl-row small{color:#8da7bc}
-.info-line{margin-top:12px;color:#9db0c2;font-size:12px;text-align:center;line-height:1.7}
-.sbar{margin:13px 0}.sbar .l{display:flex;justify-content:space-between;font-size:14px;font-weight:900;margin-bottom:5px}.sbar .l span{color:#b8c9d8;font-weight:700}
-.sbar .b{height:10px;border-radius:6px;background:#159cff;overflow:hidden}.sbar .b i{display:block;height:100%;background:var(--green)}
-.pitches{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.pitch h4{display:flex;justify-content:space-between;margin:0 0 8px;padding-bottom:5px;border-bottom:3px solid var(--green);font-size:15px;text-transform:uppercase}.pitch h4 span{color:#ffd454}
-.pitch.away h4{border-color:var(--blue)}
-.fld{position:relative;aspect-ratio:4/5;border-radius:12px;border:2px solid #ffffff40;background:repeating-linear-gradient(0deg,#1d6a3b 0 9%,#195f35 9% 18%);overflow:hidden}
-.fld:before{content:"";position:absolute;left:24%;right:24%;bottom:0;height:16%;border:2px solid #ffffff40;border-bottom:0}
-.pl{position:absolute;transform:translate(-50%,-50%);text-align:center;width:22%}
-.pl i{display:flex;width:clamp(26px,3.4vw,40px);height:clamp(26px,3.4vw,40px);border-radius:50%;margin:0 auto;align-items:center;justify-content:center;font-style:normal;font-weight:900;font-size:clamp(12px,1.6vw,17px);border:2px solid #fff;box-shadow:0 3px 8px #0009}
-.pl span{display:inline-block;max-width:100%;margin-top:3px;padding:0 5px;border-radius:6px;background:#000a;font-size:clamp(10px,1.25vw,13px);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bench{margin-top:10px;font-size:12px;color:#9db0c2;line-height:1.6}
-.tbl{width:100%;border-collapse:collapse;font-size:13px}.tbl th{color:#8da7bc;font-size:11px;text-align:right;padding:6px 5px;border-bottom:1px solid #1d3449}.tbl td{padding:7px 5px;text-align:right;border-bottom:1px solid #12263a;font-variant-numeric:tabular-nums}
-.tbl th:nth-child(2),.tbl td:nth-child(2){text-align:left}.tbl td.t{display:flex;align-items:center;gap:8px;font-weight:800}.tbl tr.hl td{background:#0d2a21;color:var(--green)}.tbl td b{color:#fff}
-.tbl img{width:20px;height:20px;object-fit:contain}.tbl-wrap{max-height:430px;overflow:auto}
-.grp-name{margin:12px 0 4px;color:var(--green);font-size:12px;font-weight:1000;letter-spacing:1px;text-transform:uppercase}
-.vid{display:block;width:100%;aspect-ratio:16/9;border:0;border-radius:12px;background:#000}
-.spot-body{padding:6px 12px 14px;text-align:center}.spot-body .vs-row{cursor:pointer}
-.spot-body .kickoff{margin-top:12px}
-.comp-list{padding:0 10px 12px;display:grid;gap:6px}.comp-list button{display:flex;justify-content:space-between;align-items:center;border:1px solid #1a3043;border-radius:9px;background:#08131f;color:#dfeaf5;padding:9px 11px;font-size:13px;font-weight:800;cursor:pointer;text-align:left}.comp-list button:hover{border-color:var(--green)}.comp-list small{color:#8da7bc}
-body.stream .ad,body.stream .cookie-banner,body.stream .bottom-grid{display:none!important}
-@media(max-width:760px){.pitches{grid-template-columns:1fr}.tl-row{grid-template-columns:1fr 54px 1fr;font-size:13px}.centre-body{padding:12px}}
-.hero-placeholder .scorers{overflow-wrap:break-word}.scorers span em{white-space:nowrap}
-@media(max-width:760px){.scorers span{font-size:12px;padding:3px 6px;flex-wrap:wrap}}
-/* ===== Admin paneli (faqat ?admin=1 ochilgan brauzerda) ===== */
-#admBtn{position:fixed;right:16px;bottom:16px;z-index:60;border:1px solid #8a6d1b;border-radius:99px;background:#2b220c;color:#ffd454;padding:10px 16px;font-weight:1000;letter-spacing:.8px;cursor:pointer;box-shadow:0 8px 24px #000a}
-#admDrawer{position:fixed;top:12px;right:12px;bottom:70px;width:min(470px,calc(100vw - 24px));z-index:61;overflow:auto;border:1px solid #2a4a63;border-radius:14px;background:#07131f;box-shadow:0 20px 60px #000c;color:#e6eef7;font-size:14px}
-#admDrawer[hidden]{display:none}
-.adm-h{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid #1d3449;font-weight:1000}
-.adm-h button,#admDrawer button,#admDrawer select,#admDrawer input[type=number]{font:inherit;border:1px solid #2c4b63;border-radius:9px;background:#0d2133;color:#fff;padding:8px 12px;cursor:pointer}
-#admDrawer button:hover{border-color:var(--green)}
-.adm-s{padding:14px 16px;border-bottom:1px solid #12263a;display:grid;gap:9px}
-.adm-s h4{margin:0;color:var(--green);font-size:12px;letter-spacing:1.5px;text-transform:uppercase}
-.adm-err{color:#ff8a8a}.adm-ok{color:#86efac}.adm-mut{color:#8da7bc;font-size:12px}
-.adm-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.adm-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px 10px}.adm-grid label{display:flex;gap:7px;align-items:center;font-size:13px}
-#admDrawer select{width:100%}
-
-/* ===== V3: livescore tuzilmasi ===== */
-.ls-bar{display:grid;gap:10px;margin-bottom:14px}
-.ds-wrap{display:flex;align-items:center;gap:6px}
-.ds-arrow{flex:none;width:36px;height:42px;border:1px solid #21394e;border-radius:10px;background:#0a1826;color:#cfe0ee;font-size:22px;font-weight:900;cursor:pointer}
-.ds-arrow:hover{border-color:var(--green);color:var(--green)}
-.datestrip{display:flex;gap:6px;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:none;flex:1;padding:2px}
-.datestrip::-webkit-scrollbar{display:none}
-.ds-btn{flex:none;min-width:84px;text-align:center;border:1px solid #21394e;border-radius:10px;background:#0a1826;color:#c9d8e6;padding:7px 10px;font-weight:900;cursor:pointer;line-height:1.15}
-.ds-btn small{display:block;font-size:10px;color:#8da7bc;font-weight:800;letter-spacing:.5px;margin-top:2px}
-.ds-btn.active{background:var(--green);border-color:var(--green);color:#03120b}.ds-btn.active small{color:#0a3a22}
-.ds-btn.live{border-color:#7b1d2a;color:#ffb3bd}.ds-btn.live.active{background:#d4223c;border-color:#d4223c;color:#fff}.ds-btn.live.active small{color:#ffd5db}
-.ls-filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.seg{display:inline-flex;border:1px solid #21394e;border-radius:10px;overflow:hidden}
-.seg button{border:0;background:#0a1826;color:#c9d8e6;padding:8px 14px;font-weight:900;font-size:13px;cursor:pointer;border-right:1px solid #21394e}
-.seg button:last-child{border-right:0}.seg button.active{background:#13324a;color:var(--green)}
-.seg .cnt{margin-left:6px;font-size:11px;opacity:.75}
-.pill-x{border:1px solid #1e6447;border-radius:99px;background:#0b281d;color:var(--green);padding:6px 12px;font-size:12px;font-weight:900;cursor:pointer}
-.ls-note{color:#7f98ad;font-size:11px}
-.lg-block{margin-bottom:12px;border:1px solid #1a3043;border-radius:12px;background:#07131f;overflow:hidden}
-.lg-head{display:flex;align-items:center;gap:10px;width:100%;border:0;border-bottom:1px solid #16293a;background:linear-gradient(90deg,#0d2a21,#08151f 70%);color:#fff;padding:11px 14px;cursor:pointer;text-align:left}
-.lg-head b{color:var(--green);font-size:14px;letter-spacing:.8px;text-transform:uppercase}.lg-head small{color:#9db6cc;font-size:11px;letter-spacing:.6px;text-transform:uppercase}
-.lg-head .lg-n{margin-left:auto;font-size:11px;font-weight:900;color:#9db6cc}.lg-head .lg-n.live{color:#ff8a98}.lg-head .lg-c{color:#6f8ba1;font-size:12px}
-.lrow{display:grid;grid-template-columns:72px 1fr 92px 1fr 26px;align-items:center;gap:8px;width:100%;border:0;border-bottom:1px solid #102334;background:transparent;color:#eef5fb;padding:11px 14px;cursor:pointer;text-align:left;font:inherit}
-.lrow:hover{background:#0b1d2c}.lrow.open{background:#0d2336}
-.lr-st{font-size:12px;font-weight:900;color:#9db6cc;font-variant-numeric:tabular-nums}.lr-st.live{color:#ff6b7d}.lr-st.live:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#ff3b52;margin-right:6px;animation:pulse 1.6s infinite}
-.lr-t{display:flex;align-items:center;gap:9px;min-width:0;font-weight:900;font-size:15px}.lr-t.home{justify-content:flex-end;text-align:right}.lr-t b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lr-t img,.lr-t .mini-crest{width:22px;height:22px;object-fit:contain;flex:none}
-.lr-sc{text-align:center;font-weight:1000;font-size:18px;letter-spacing:1px;background:#0c2030;border:1px solid #1b3448;border-radius:8px;padding:5px 0;font-variant-numeric:tabular-nums}.lr-sc.live{color:var(--green);border-color:#1e6447;background:#0a2018}
-.lr-sh,.lr-sa{display:none}.lr-ch{color:#6f8ba1;font-size:16px;text-align:center;transition:transform .2s}.lrow.open .lr-ch{transform:rotate(180deg);color:var(--green)}
-.mdetail{border-bottom:1px solid #16293a;background:#06101a;padding:0}
-.md-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px;border-bottom:1px solid #12263a;background:#07121e}.md-tabs .filter{padding:7px 12px;font-size:12px}
-.md-body{padding:14px 16px;min-height:90px}
-.more-btn{margin:8px 12px 10px;width:calc(100% - 24px)}
-.cm-pin{margin-bottom:10px;padding:10px 12px;border:1px solid #1e6447;border-radius:10px;background:#0b281d;font-weight:900}
-.cm-note{padding:9px 12px;margin-bottom:7px;border-left:4px solid var(--green);border-radius:8px;background:#0a1826}.cm-note small{display:block;color:#8da7bc;font-size:11px;margin-bottom:2px}
-.cm-h{margin:14px 0 6px;color:#8da7bc;font-size:11px;font-weight:1000;letter-spacing:1.4px;text-transform:uppercase}
-.cm-auto{padding:6px 2px;border-bottom:1px solid #12263a;font-size:13px;color:#cfe0ee}.cm-auto b{color:var(--green);margin-right:8px}
-.hero-slot #heroDetail .mdetail{margin-top:14px;border:1px solid #1d3449;border-radius:12px;overflow:hidden}
 @media(max-width:700px){
- .lrow{grid-template-columns:54px 1fr 34px 22px;grid-template-areas:"st home sh ch" "st away sa ch";row-gap:6px;padding:10px 10px}
- .lr-st{grid-area:st}.lr-t.home{grid-area:home;justify-content:flex-start;text-align:left;flex-direction:row-reverse;justify-content:flex-end}.lr-t.away{grid-area:away}
- .lr-sc{display:none}.lr-sh,.lr-sa{display:block;text-align:center;font-weight:1000;font-size:16px}.lr-sh{grid-area:sh}.lr-sa{grid-area:sa}.lr-ch{grid-area:ch}
- .lr-t.home{flex-direction:row}.lr-t.home img,.lr-t.home .mini-crest{order:-1}
- .ds-btn{min-width:74px}.md-body{padding:12px}
+  .lrow{grid-template-columns:64px 1fr 32px auto;grid-template-areas:"st home sh act" "st away sa act";row-gap:6px;padding:10px 10px}
+  .lr-st{grid-area:st}
+  .lr-t.home{grid-area:home;justify-content:flex-start;text-align:left;flex-direction:row}
+  .lr-t.home img,.lr-t.home .mini-crest{order:-1}
+  .lr-t.away{grid-area:away}
+  .lr-sc{display:none}
+  .lr-sh,.lr-sa{display:block;text-align:center;font-weight:900;font-size:16px;color:#b8cade}
+  .lr-sh.is-winner,.lr-sa.is-winner{color:#ffffff}
+  .lr-sh{grid-area:sh}.lr-sa{grid-area:sa}
+  .lr-actions{grid-area:act}
+  .ds-btn{min-width:76px}.md-body{padding:12px}
 }
+
 /* admin: tablar, sharhlar */
 .adm-tabs{display:flex;gap:4px;padding:8px 10px;border-bottom:1px solid #12263a;background:#081522;position:sticky;top:0;z-index:2}
-.adm-tabs button{flex:1;padding:9px 4px!important;font-size:12px;font-weight:900}.adm-tabs button.on{background:#13324a!important;border-color:var(--green)!important;color:var(--green)}
+.adm-tabs button{flex:1;padding:9px 4px!important;font-size:12px;font-weight:800}.adm-tabs button.on{background:#13324a!important;border-color:var(--green)!important;color:var(--green)}
 .adm-qg{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:6px}.adm-qg button{font-size:13px;font-weight:800;padding:8px 6px}
-.adm-note{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;padding:8px 10px;border:1px solid #16293a;border-radius:9px;background:#0a1826;font-size:13px}.adm-note small{display:block;color:#7f98ad}.adm-note button{flex:none;padding:3px 8px!important;background:#5a1620!important}
+.adm-note{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;padding:8px 10px;border:1px solid #16293a;border-radius:9px;background:#0a1826;font-size:13px}.adm-note small{display:block;color:#7f98ad;margin-top:2px;word-break:break-all}.adm-note button{flex:none;padding:3px 8px!important;background:#5a1620!important}
 #admDrawer textarea,#admDrawer input[type=password]{width:100%;font:inherit;border:1px solid #2c4b63;border-radius:9px;background:#0d2133;color:#fff;padding:9px}
-/* mobil: gorizontal kengayishning oldini olish */
 .maincol,.sidecol,.ls-bar,.ds-wrap,.datestrip,.ls-list,.lg-block,.lrow-wrap,.mdetail{min-width:0;max-width:100%}
 .datestrip{overscroll-behavior-x:contain}
 .md-body,.tbl-wrap{overflow-x:auto}
-/* bosilgan o'yin yonida parallel jadval */
 .md-grid{display:grid;grid-template-columns:minmax(0,1fr) 290px}
 .md-aside{border-left:1px solid #12263a;padding:12px 14px;min-width:0}.md-aside:empty{display:none}
-.md-aside-t{margin-bottom:8px;color:var(--green);font-size:11px;font-weight:1000;letter-spacing:1.2px;text-transform:uppercase}
-.md-aside .tbl{font-size:12px}.md-aside .tbl td.t{gap:6px}.md-aside .tbl img{width:16px;height:16px}.tbl tr.gap td{text-align:center!important;color:#6f8ba1;padding:2px}
-.md-pick{margin-left:auto;border:1px solid #1e6447;border-radius:8px;background:#0b281d;color:var(--green);padding:7px 12px;font-size:12px;font-weight:900;cursor:pointer}
+.md-aside-t{margin-bottom:8px;color:var(--green);font-size:11.5px;font-weight:900;letter-spacing:1px;text-transform:uppercase}
+.md-aside .tbl{font-size:12.5px}.md-aside .tbl td.t{gap:6px}.md-aside .tbl img{width:16px;height:16px}.tbl tr.gap td{text-align:center!important;color:#6f8ba1;padding:2px}
+.md-pick{margin-left:auto;border:1px solid #1e6447;border-radius:8px;background:#0b281d;color:var(--green);padding:7px 12px;font-size:12px;font-weight:800;cursor:pointer}
 @media(max-width:1100px){.md-grid{grid-template-columns:minmax(0,1fr)}.md-aside{display:none}}
+
+style.css
+Показан объект "style.css".
