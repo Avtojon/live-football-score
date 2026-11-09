@@ -31,7 +31,15 @@ window.LF = (() => {
     try {
       const r = await fetch(API + path, { cache: 'no-store', signal: ctl.signal, credentials: 'omit' });
       let j = null; try { j = await r.json(); } catch (_) {}
-      if (!r.ok || !j || j.ok === false) throw new Error((j && j.message) || 'HTTP ' + r.status);
+      if (!r.ok || !j || j.ok === false) {
+        if (j && j.service === 'LIVE FOOTBALL API proxy') {
+          throw new Error('Cloudflare Worker hali eski (API-Football) kodda turibdi. Yangi worker.js ni Cloudflare Worker ichiga joylab Deploy qiling.');
+        }
+        throw new Error((j && j.message) || 'HTTP ' + r.status);
+      }
+      if (j.service === 'LIVE FOOTBALL API proxy') {
+        throw new Error('Cloudflare Worker hali eski (API-Football) kodda turibdi. Yangi worker.js ni Cloudflare Worker ichiga joylab Deploy qiling.');
+      }
       return j;
     } finally { clearTimeout(t); }
   }
@@ -44,11 +52,12 @@ window.LF = (() => {
   const get = id => { const m = store.matches.get(id); return m && !prefs.off.includes(m.lg) ? m : null; };
 
   /* Oyna: bugundan -back..+ahead kun. Har kun ALOHIDA so'rov (ESPN oraliq so'roviga HTTP 400 beradi), 3 tadan parallel;
-     avval bugun, ertaga va kecha — sahifa tez to'ladi. */
+     avval bugun, ertaga va kecha — sahifa tez to'ladi. Vaqt mintaqasi farqi uchun kechadan yana 1 UTC kun orqaga ham olinadi. */
   async function loadWindow(onProgress) {
     const now = new Date(), order = [0, 1, -1];
     for (let i = 2; i <= prefs.ahead; i++) order.push(i);
-    for (let i = 2; i <= prefs.back; i++) order.push(-i);
+    const maxBackUtc = Math.min(7, prefs.back + 1);
+    for (let i = 2; i <= maxBackUtc; i++) order.push(-i);
     const jobs = order.map(n => ymd(addDays(now, n)));
     let ok = 0, lastErr = null, idx = 0;
     const worker = async () => {
