@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#030b14">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.googletagmanager.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.google.com https://*.doubleclick.net https://*.gstatic.com; connect-src 'self' https://*.workers.dev https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.googlesyndication.com https://*.doubleclick.net; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; frame-src https://www.youtube-nocookie.com https://*.googlesyndication.com https://*.doubleclick.net https://*.google.com; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
 <meta name="description" content="Follow live football scores, major competitions, line-ups, stats and upcoming fixtures in one fast football match centre.">
 <link rel="canonical" href="https://avtojon.github.io/live-football-score/">
 <meta name="robots" content="index,follow,max-image-preview:large">
@@ -49,25 +52,23 @@
 
   <div class="content-grid">
     <section class="maincol">
-      <!-- ASOSIY PANEL: doim eng nufuzli o'yin; foydalanuvchi tanlasa, o'sha o'yin (F5 — qayta standart holat) -->
-      <section class="hero-slot data-slot" id="mainScoreboard" aria-label="Main match scoreboard">
-        <div class="slot-top"><span class="slot-badge">LIVE FOOTBALL · MATCH CENTER</span><span class="slot-size" id="mainHint">MAIN SCOREBOARD</span></div>
+      <!-- ASOSIY PANEL: doim eng nufuzli o'yin (avtomatik). Bosilsa, tafsilotlari shu panelning ostida ochiladi -->
+      <section class="hero-slot data-slot" id="mainScoreboard" aria-label="Biggest match">
+        <div class="slot-top"><span class="slot-badge">LIVE FOOTBALL · BIGGEST MATCH</span><span class="slot-size" id="mainHint">AUTO</span></div>
         <div id="featuredMatch"><div class="empty-state featured-empty"><strong>Loading matches…</strong></div></div>
-      </section>
-
-      <!-- MATCH CENTRE: tanlangan o'yin tafsilotlari (hamma ko'radi) -->
-      <section class="centre" id="centre" hidden>
-        <div class="centre-tabs" id="centreTabs" role="tablist"></div>
-        <div class="centre-body" id="centreBody"></div>
+        <div id="heroDetail"></div>
       </section>
 
       <div class="section-head" id="fixtures" style="margin-top:26px">
         <h2 style="margin:0">Matches</h2>
         <span id="matchCount" style="color:var(--green);font-size:12px;font-weight:900">LOADING</span>
       </div>
-      <div class="filterbar" id="viewTabs" aria-label="Match days"></div>
-      <div class="filterbar chip-row" id="leagueChips" aria-label="Competition filter"></div>
-      <div class="match-list" id="matchList"><div class="empty-state">Loading…</div></div>
+      <div class="ls-bar">
+        <div class="ds-wrap"><button type="button" class="ds-arrow" data-ds="-1" aria-label="Earlier days">‹</button><div class="datestrip" id="dateStrip" aria-label="Match days"></div><button type="button" class="ds-arrow" data-ds="1" aria-label="Later days">›</button></div>
+        <div class="ls-filters" id="lsFilters"></div>
+        <div class="ls-note">Times are shown in your local time. Tap a match to open its details.</div>
+      </div>
+      <div class="ls-list" id="matchList"><div class="empty-state">Loading…</div></div>
 
       <section class="ad" aria-label="Advertisement"><small>ADVERTISEMENT</small><div><strong>YOUR BRAND HERE</strong><p>Connect with a global football audience</p></div></section>
     </section>
@@ -87,7 +88,7 @@
       </section>
 
       <section class="side-card">
-        <div class="side-title"><span>Competitions</span><span>↗</span></div>
+        <div class="side-title"><span>Competitions</span><span id="compHint">TAP TO FILTER</span></div>
         <div class="comp-list" id="compList"></div>
       </section>
 
@@ -96,7 +97,7 @@
       <aside class="side-info-card" aria-label="Match centre info">
         <div class="side-info-kicker"><span>⚽ MATCH CENTRE</span><span class="info-tag">TIP</span></div>
         <div class="side-info-title">PICK ANY MATCH</div>
-        <p class="side-info-text">Tap any match to see its line-ups, timeline, stats and table in the Match Centre. Refresh the page to return to the biggest game of the moment.</p>
+        <p class="side-info-text">Tap any match in the list to open its timeline, stats, line-ups, table and live commentary right where it is.</p>
       </aside>
     </aside>
   </div>
@@ -110,6 +111,7 @@
   <footer id="footer"><div class="footer-inner"><strong>⚽ LIVE FOOTBALL</strong><span>Big matches. Clear scores. One place.</span><span><a href="#live">LIVE</a><a href="#fixtures">FIXTURES</a><a href="about.html">ABOUT</a><a href="#footer" id="privacySettingsLink">PRIVACY &amp; COOKIE SETTINGS</a></span></div></footer>
 </main>
 <script src="app-config.js"></script>
+<script src="lf-core.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

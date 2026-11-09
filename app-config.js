@@ -1,5 +1,4 @@
 /* Public website configuration only. Never put API keys or private tokens here. */
-/* Data now comes straight from ESPN. This Worker URL is only an optional FALLBACK (leave as is or set to ""). */
 window.LIVE_FOOTBALL_API_BASE = "https://live-football-api.i-boburon.workers.dev";
 window.LIVE_FOOTBALL_CONFIG = {
   /* OPTIONAL: GA4 Measurement ID (format: G-XXXXXXXXXX). */
@@ -9,9 +8,11 @@ window.LIVE_FOOTBALL_CONFIG = {
   adsenseSlots: [],
   /* Public YouTube channel URL. */
   youtubeChannelUrl: "",
-  /* How many days ahead to load (1 week = 6). Can also be changed in the Control panel. */
+  /* Necha kun oldinga o'yinlar yuklanadi (1 hafta = 6) */
   daysAhead: 6,
-  /* Optional link to your PC stream-control app, shown inside the Control panel.
-     The Control panel itself appears only in a browser where you opened the site once with ?admin=1. */
+  /* Kechagi va undan oldingi kunlar (video arxivi uchun admin panelda 5 kun qilinadi) */
+  daysBack: 1,
+  /* Faqat sizga ko'rinadigan "Stream control" tugmasi manzili (sizning kompyuteringizdagi boshqaruv paneli).
+     Tugma faqat saytni ?admin=1 bilan bir marta ochgan brauzerda ko'rinadi. */
   controlUrl: "http://localhost:3000/control"
 };
